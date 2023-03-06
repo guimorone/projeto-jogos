@@ -4,7 +4,8 @@
 
 @layer base {
   html {
-    font-family: Inter;
-    background-color: #fff;
+    font-family: DM Sans, Inter, sans-serif;
+    background-color: #000000;
+    color: #fff;
   }
 }
