@@ -23,6 +23,12 @@ export function formatNumber(
   }).format(value);
 }
 
+export const removeAccentsOrDiacriticsInString = (str: string, form: 'NFC' | 'NFD' | 'NFKC' | 'NFKD' = 'NFD'): string =>
+  typeof str === 'string' ? str.normalize(form).replace(/[\u0300-\u036f]/g, '') : str;
+
+export const normalizeValue = (value: string | number): string =>
+  typeof value === 'string' ? removeAccentsOrDiacriticsInString(value.trim().toLowerCase()) : value.toString();
+
 export async function asyncReadLocalTxtFile(filePath: string, splitStr: string = '\n'): Promise<any> {
   let res;
 
