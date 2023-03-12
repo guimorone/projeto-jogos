@@ -2,11 +2,9 @@ import { createBrowserRouter, redirect, RouterProvider } from 'react-router-dom'
 import Home from './pages/Home';
 import Game from './pages/Game';
 import GameLevel from './pages/GameLevel';
-import Algorithm from './pages/Algorithm';
 
 const router = createBrowserRouter([
   { path: '/', element: <Home /> },
-  { path: '/algorithm', element: <Algorithm /> },
   {
     path: '/game',
     element: <Game />,
@@ -17,7 +15,7 @@ const router = createBrowserRouter([
       },
     ],
   },
-  
+
   { path: '*', loader: () => redirect('/') },
 ]);
 
