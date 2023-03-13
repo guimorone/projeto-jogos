@@ -38,3 +38,15 @@ export async function asyncReadLocalTxtFile(filePath: string, splitStr: string =
 
   return res;
 }
+
+export const uniqueArray = (a: any[]): any[] => [...new Set(a)];
+
+export function shuffleArray(array: any[]): any[] {
+  for (let currentIndex = array.length - 1; currentIndex >= 0; currentIndex--) {
+    const randomIndex = Math.floor(Math.random() * (currentIndex + 1));
+    // swap
+    [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+  }
+
+  return array;
+}

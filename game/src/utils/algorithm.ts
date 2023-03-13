@@ -1,4 +1,5 @@
 import { normalizeValue } from '.';
+import { INITIAL_BOSS_HEALTH, INITIAL_MIN_WORDS_LENGTH, INITIAL_MAX_WORDS_LENGTH } from '../constants';
 
 export const handleChangeWord = (
   wordWritten: string,
@@ -24,3 +25,11 @@ export const handleChangeWord = (
 
   return { prefixList, suffixList };
 };
+
+export const gameRules = (
+  level: number
+): { newBossHealth: number; minWordsLength: number; maxWordsLength: number } => ({
+  newBossHealth: INITIAL_BOSS_HEALTH + 3 * level,
+  minWordsLength: INITIAL_MIN_WORDS_LENGTH + level,
+  maxWordsLength: INITIAL_MAX_WORDS_LENGTH + 2 * level,
+});
