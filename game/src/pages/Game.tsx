@@ -42,6 +42,7 @@ export default function Game() {
   const [wordsMinLength, setWordsMinLength] = useState<number>(INITIAL_MIN_WORDS_LENGTH);
   const [wordsMaxLength, setWordsMaxLength] = useState<number>(INITIAL_MAX_WORDS_LENGTH);
   const [wordsList, setWordsList] = useState<string[]>([]);
+  const [sentWordsList, setSentWordsList] = useState<string[]>([]);
 
   // load all words
   useEffect(() => {
@@ -53,9 +54,16 @@ export default function Game() {
         const wordsPromise = asyncReadLocalTxtFile(words);
 
         Promise.all([conjPromise, dicioPromise, verbsPromise, wordsPromise])
-          .then(([conjData, dicioData, verbsData, wordsData]) =>
-            setWordsList(uniqueArray([...conjData, ...dicioData, ...verbsData, ...wordsData]))
-          )
+          .then(([conjData, dicioData, verbsData, wordsData]) => {
+            const newWordsList = uniqueArray([...conjData, ...dicioData, ...verbsData, ...wordsData]);
+
+            setWordsList(newWordsList);
+            setSentWordsList(
+              shuffleArray(
+                newWordsList.filter((str: string) => str.length >= wordsMinLength && str.length <= wordsMaxLength)
+              )
+            );
+          })
           .catch(err => console.error(`Error in "load all words" step!\n${err}`))
           .finally(() => setLevel(1));
 
@@ -84,6 +92,12 @@ export default function Game() {
     setWordsMinLength(minWordsLength);
     setWordsMaxLength(maxWordsLength);
   };
+
+  useEffect(() => {
+    setSentWordsList(
+      shuffleArray(wordsList.filter((str: string) => str.length >= wordsMinLength && str.length <= wordsMaxLength))
+    );
+  }, [wordsList, wordsMinLength, wordsMaxLength]);
 
   useEffect(() => {
     if (level > 0) {
@@ -140,9 +154,7 @@ export default function Game() {
       ) : level <= MAX_LEVEL && gameStatus !== 'gameOver' ? (
         <Outlet
           context={{
-            words: shuffleArray(
-              wordsList.filter((str: string) => str.length >= wordsMinLength && str.length <= wordsMaxLength)
-            ),
+            words: sentWordsList,
             gameStatus,
             playerHealth,
             setPlayerHealth,
