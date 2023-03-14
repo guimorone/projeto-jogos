@@ -1,6 +1,12 @@
+import { FC } from 'react';
 import { Modal } from 'flowbite-react';
 
-export default function About({ show, onClose }: { show: boolean; onClose: VoidFunction }) {
+interface IFuncProps {
+  show: boolean;
+  onClose: VoidFunction;
+}
+
+const About: FC<IFuncProps> = ({ show, onClose }: IFuncProps) => {
   return (
     <Modal show={show} onClose={onClose}>
       <div className="bg-neutral-800 rounded-md">
@@ -16,4 +22,6 @@ export default function About({ show, onClose }: { show: boolean; onClose: VoidF
       </div>
     </Modal>
   );
-}
+};
+
+export default About;

@@ -7,9 +7,13 @@ Jogo 2D
 - Node v16.19.1
 - npm v9.6.1
 
-## Local Run
+## Desenvolvimento local
 
 ```sh
 cd game/
 npm install && npm run dev
 ```
+
+## Fonte das palavras
+
+[Léxico pt-br](https://github.com/fserb/pt-br)

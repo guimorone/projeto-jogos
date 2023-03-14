@@ -23,6 +23,10 @@ export function formatNumber(
   }).format(value);
 }
 
+export function classNames(...classes: any[]): string {
+  return classes.filter(Boolean).join(' ');
+}
+
 export const removeAccentsOrDiacriticsInString = (str: string, form: 'NFC' | 'NFD' | 'NFKC' | 'NFKD' = 'NFD'): string =>
   typeof str === 'string' ? str.normalize(form).replace(/[\u0300-\u036f]/g, '') : str;
 
