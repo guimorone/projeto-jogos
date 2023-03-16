@@ -5,7 +5,7 @@ Jogo 2D
 ## Dependências
 
 - Node v16.19.1
-- npm v9.6.1
+- npm v9.6.2
 
 ## Desenvolvimento local
 

@@ -1,6 +1,12 @@
 import { INITIAL_PLAYER_HEALTH } from './../constants/index';
 import { normalizeValue } from '.';
-import { INITIAL_BOSS_HEALTH, INITIAL_MIN_WORDS_LENGTH, INITIAL_MAX_WORDS_LENGTH } from '../constants';
+import {
+  MAX_GAME_COLUMNS,
+  INITIAL_GAME_COLUMNS,
+  INITIAL_BOSS_HEALTH,
+  INITIAL_MIN_WORDS_LENGTH,
+  INITIAL_MAX_WORDS_LENGTH,
+} from '../constants';
 
 export const handleChangeWord = (
   wordWritten: string,
@@ -29,9 +35,18 @@ export const handleChangeWord = (
 
 export const gameRules = (
   level: number
-): { newPlayerHealth: number; newBossHealth: number; minWordsLength: number; maxWordsLength: number } => ({
+): {
+  newPlayerHealth: number;
+  newBossHealth: number;
+  minWordsLength: number;
+  maxWordsLength: number;
+  gameColumns: number;
+} => ({
   newPlayerHealth: INITIAL_PLAYER_HEALTH - level,
   newBossHealth: INITIAL_BOSS_HEALTH + 2 * level,
   minWordsLength: INITIAL_MIN_WORDS_LENGTH + level,
   maxWordsLength: INITIAL_MAX_WORDS_LENGTH + (level + 1),
+  gameColumns: Math.min(INITIAL_GAME_COLUMNS + level - 1, MAX_GAME_COLUMNS),
 });
+
+export const getMaxWordsInScreen = (windowHeight: number): number => Math.floor((8 * windowHeight) / 700);
