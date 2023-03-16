@@ -27,6 +27,12 @@ export function classNames(...classes: any[]): string {
   return classes.filter(Boolean).join(' ');
 }
 
+export function getWindowDimensions(): { width: number; height: number } {
+  const { innerWidth: width, innerHeight: height } = window;
+
+  return { width, height };
+}
+
 export const removeAccentsOrDiacriticsInString = (str: string, form: 'NFC' | 'NFD' | 'NFKC' | 'NFKD' = 'NFD'): string =>
   typeof str === 'string' ? str.normalize(form).replace(/[\u0300-\u036f]/g, '') : str;
 
@@ -54,3 +60,4 @@ export function shuffleArray(array: any[]): any[] {
 
   return array;
 }
+

@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { useState, useEffect, memo, FC, Dispatch, SetStateAction } from 'react';
 import { Outlet, Link, useNavigate, useOutletContext } from 'react-router-dom';
 import { ArrowLeftIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline';
 import { Spinner } from 'flowbite-react';
@@ -22,6 +22,7 @@ type GameStatusOptions = 'starting' | 'paused' | 'running' | 'victory' | 'defeat
 type OutletContextType = {
   words: string[];
   gameStatus: GameStatusOptions;
+  gameColumns: number;
   playerHealth: number;
   playerMaxHealth: number;
   setPlayerHealth: Dispatch<SetStateAction<number>>;
@@ -30,10 +31,13 @@ type OutletContextType = {
   bossMaxHealth: number;
 };
 
-export default function Game() {
+interface IFuncProps {}
+
+const Game: FC<IFuncProps> = ({}: IFuncProps) => {
   const navigate = useNavigate();
 
   const [gameStatus, setGameStatus] = useState<GameStatusOptions>('starting');
+  const [gameColumns, setGameColumns] = useState<number>(1);
   const [level, setLevel] = useState<number>(0);
   const [playerHealth, setPlayerHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
   const [playerMaxHealth, setPlayerMaxHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
@@ -83,8 +87,9 @@ export default function Game() {
   }, [gameStatus]);
 
   const newLevelRules = (): void => {
-    const { newPlayerHealth, newBossHealth, minWordsLength, maxWordsLength } = gameRules(level);
+    const { newPlayerHealth, newBossHealth, minWordsLength, maxWordsLength, gameColumns } = gameRules(level);
 
+    setGameColumns(gameColumns);
     setPlayerHealth(newPlayerHealth);
     setPlayerMaxHealth(newPlayerHealth);
     setBossHealth(newBossHealth);
@@ -115,7 +120,7 @@ export default function Game() {
   }, [playerHealth, bossHealth]);
 
   return (
-    <div className="relative p-1.5 w-screen h-screen min-w-full min-h-full bg-gradient-to-t from-violet-900 to-sky-900">
+    <div className="relative p-1.5 w-full h-full min-h-screen bg-gradient-to-t from-violet-900 to-sky-900">
       <header className="flex justify-between">
         <Link
           to="/"
@@ -156,6 +161,7 @@ export default function Game() {
           context={{
             words: sentWordsList,
             gameStatus,
+            gameColumns,
             playerHealth,
             setPlayerHealth,
             playerMaxHealth,
@@ -167,8 +173,10 @@ export default function Game() {
       ) : null}
     </div>
   );
-}
+};
 
 export function useGameContext(): OutletContextType {
   return useOutletContext<OutletContextType>();
 }
+
+export default memo(Game);
