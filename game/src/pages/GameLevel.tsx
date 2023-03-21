@@ -37,7 +37,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
   const [wordsSuffixList, setWordsSuffixList] = useState<string[]>([]);
   const [displayedWords, setDisplayedWords] = useState<string[]>([]);
   const [countWaves, setCountWaves] = useState<number>(0);
-  const [intervalId, setIntervalId] = useState<NodeJS.Timer>();
+  const [intervalId, setIntervalId] = useState<number | undefined>();
 
   const [springs, springsApi] = useSprings(countWordsInWave * totalWaves, () => {
     const gap = 100;
@@ -133,7 +133,8 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
 
     if (countWaves < totalWaves && !intervalId) {
       updateWordsArrays(); // first call without delay
-      setIntervalId(setInterval(updateWordsArrays, waveDelay * 1000));
+      // horrível isso aqui em baixo, fiz assim pq botei o tipo NodeJS.Timer e deu erro na hora de buildar
+      setIntervalId(setInterval(updateWordsArrays, waveDelay * 1000) as unknown as number);
     }
 
     // return () => {
