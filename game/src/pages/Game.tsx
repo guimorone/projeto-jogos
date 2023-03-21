@@ -11,8 +11,10 @@ import {
   INITIAL_BOSS_HEALTH,
   INITIAL_MIN_WORDS_LENGTH,
   INITIAL_MAX_WORDS_LENGTH,
+  INITIAL_TOTAL_WAVES,
   INITIAL_WAVE_DELAY,
   INITIAL_COUNT_WORDS_IN_WAVE,
+  INITIAL_WORDS_SPEED,
 } from '../constants';
 import conjugations from '../assets/words/conjugations.txt';
 import dicio from '../assets/words/dicio.txt';
@@ -33,6 +35,7 @@ export type OutletContextType = {
   totalWaves: number;
   waveDelay: number;
   countWordsInWave: number;
+  wordsSpeed: number;
 };
 
 interface IFuncProps {}
@@ -40,17 +43,19 @@ interface IFuncProps {}
 const Game: FC<IFuncProps> = ({}: IFuncProps) => {
   const navigate = useNavigate();
 
+  // game and level states
   const [gameStatus, setGameStatus] = useState<GameStatusOptions>('starting');
   const [level, setLevel] = useState<number>(0);
   const [playerHealth, setPlayerHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
   const [playerMaxHealth, setPlayerMaxHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
   const [bossHealth, setBossHealth] = useState<number>(INITIAL_BOSS_HEALTH);
   const [bossMaxHealth, setBossMaxHealth] = useState<number>(INITIAL_BOSS_HEALTH);
-  const [totalWaves, setTotalWaves] = useState<number>(2);
+  const [totalWaves, setTotalWaves] = useState<number>(INITIAL_TOTAL_WAVES);
   const [waveDelay, setWaveDelay] = useState<number>(INITIAL_WAVE_DELAY);
   const [countWordsInWave, setCountWordsInWave] = useState<number>(INITIAL_COUNT_WORDS_IN_WAVE);
   const [wordsMinLength, setWordsMinLength] = useState<number>(INITIAL_MIN_WORDS_LENGTH);
   const [wordsMaxLength, setWordsMaxLength] = useState<number>(INITIAL_MAX_WORDS_LENGTH);
+  const [wordsSpeed, setWordsSpeed] = useState<number>(INITIAL_WORDS_SPEED);
   const [wordsList, setWordsList] = useState<string[]>([]);
   const [sentWordsList, setSentWordsList] = useState<string[]>([]);
 
@@ -101,6 +106,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
       newTotalWaves,
       newWaveDelay,
       newCountWordsInWave,
+      newWordsSpeed,
     } = gameRules(level);
 
     setPlayerHealth(newPlayerHealth);
@@ -112,6 +118,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
     setCountWordsInWave(newCountWordsInWave);
     setWordsMinLength(minWordsLength);
     setWordsMaxLength(maxWordsLength);
+    setWordsSpeed(newWordsSpeed);
   };
 
   useEffect(() => {
@@ -186,6 +193,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
             totalWaves,
             waveDelay,
             countWordsInWave,
+            wordsSpeed,
           }}
         />
       ) : null}

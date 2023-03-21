@@ -1,11 +1,13 @@
-import { FC, useState, useEffect, KeyboardEvent, ChangeEvent, Fragment } from 'react';
+import { useState, useEffect, FC, KeyboardEvent, ChangeEvent, Fragment } from 'react';
 import { useParams } from 'react-router-dom';
 import { Progress } from 'flowbite-react';
 import { useSprings, animated, config } from '@react-spring/web';
 import { Transition } from '@headlessui/react';
+import Timer from '../components/Timer';
 import { classNames, randomNumber } from '../utils';
 import { handleChangeWord } from '../utils/algorithm';
 import { useWindowSize, useGameContext } from '../utils/hooks';
+import { DELAY_TO_START_NEW_LEVEL_MS } from '../constants';
 
 interface IFuncProps {}
 
@@ -25,6 +27,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
     totalWaves,
     waveDelay,
     countWordsInWave,
+    wordsSpeed,
   } = useGameContext();
 
   const { width, height } = useWindowSize();
@@ -36,18 +39,19 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
   const [wordsPrefixList, setWordsPrefixList] = useState<string[]>([]);
   const [wordsSuffixList, setWordsSuffixList] = useState<string[]>([]);
   const [displayedWords, setDisplayedWords] = useState<string[]>([]);
-  const [countWaves, setCountWaves] = useState<number>(0);
-  const [intervalId, setIntervalId] = useState<number | undefined>();
 
-  const [springs, springsApi] = useSprings(countWordsInWave * totalWaves, () => {
+  const [springs, springsApi] = useSprings(countWordsInWave * totalWaves, (index: number) => {
+    const wave = Math.floor(index / countWordsInWave);
     const gap = 100;
     const fromX = randomNumber(gap, width - gap);
-    const fromY = randomNumber(-gap, 0);
+    const fromY = randomNumber(-2 * gap, -gap);
+    const duration = wordsSpeed + wave * waveDelay;
 
     return {
       from: { x: fromX, y: fromY },
-      to: { x: fromX, y: height + gap / 2 },
-      config: config.molasses,
+      to: { x: fromX, y: height + 10 },
+      delay: DELAY_TO_START_NEW_LEVEL_MS + 500,
+      config: { ...config.slow, duration },
     };
   });
 
@@ -56,8 +60,8 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
       case 'running':
         springsApi.resume();
         break;
-      case 'newLevel':
-        springsApi.start();
+      case 'newLevel' || 'starting':
+        springsApi.start({ reset: true, delay: DELAY_TO_START_NEW_LEVEL_MS + 500 });
         break;
       case 'paused':
         springsApi.pause();
@@ -72,7 +76,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
     const newDisplayedWords = [...displayedWords];
 
     if (displayedWords.length < countWordsInWave * totalWaves)
-      for (let i = 1; i <= countWordsInWave; i++) {
+      for (let i = 1; i <= countWordsInWave * totalWaves; i++) {
         let newWord = words[randomNumber(0, words.length)];
         while (wordsHitsNames?.includes(newWord)) newWord = words[randomNumber(0, words.length)];
 
@@ -82,32 +86,17 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
     return newDisplayedWords;
   };
 
-  const resetIntervalId = (): void => {
-    clearInterval(intervalId);
-    setIntervalId(undefined);
-  };
-
   const updateWordsArrays = (): void => {
-    if (gameStatus === 'running') {
-      if (countWaves >= totalWaves && intervalId) {
-        resetIntervalId();
-        return;
-      }
+    const newDisplayedWords = getNewDisplayedWords();
+    const { prefixList, suffixList } = handleChangeWord(wordWritten, newDisplayedWords);
 
-      const newDisplayedWords = getNewDisplayedWords();
-      const { prefixList, suffixList } = handleChangeWord(wordWritten, newDisplayedWords);
-
-      setDisplayedWords(newDisplayedWords);
-      setWordsPrefixList(prefixList);
-      setWordsSuffixList(suffixList);
-      setCountWaves(prev => prev + 1);
-    }
+    setDisplayedWords(newDisplayedWords);
+    setWordsPrefixList(prefixList);
+    setWordsSuffixList(suffixList);
   };
 
   const resetStates = (): void => {
-    resetIntervalId();
     setWordWritten('');
-    setCountWaves(0);
     setDisplayedWords([]);
     setWordsPrefixList([]);
     setWordsSuffixList([]);
@@ -130,17 +119,8 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
 
   useEffect(() => {
     resetStates();
-
-    if (countWaves < totalWaves && !intervalId) {
-      updateWordsArrays(); // first call without delay
-      // horrível isso aqui em baixo, fiz assim pq botei o tipo NodeJS.Timer e deu erro na hora de buildar
-      setIntervalId(setInterval(updateWordsArrays, waveDelay * 1000) as unknown as number);
-    }
-
-    // return () => {
-    //   resetIntervalId();
-    // };
-  }, [level, words]);
+    updateWordsArrays();
+  }, [level, words, totalWaves, countWordsInWave]);
 
   useEffect(() => {
     const hitIndex = displayedWords.indexOf(wordWritten);
@@ -212,21 +192,30 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
             />
           </div>
         </header>
-        <main className="absolute w-full h-full -z-10">
-          {springs?.map((props, index) => (
-            <animated.p
-              style={props}
-              key={`ingame_word_${index}_${displayedWords[index]}`}
-              className={classNames(
-                wordsPrefixList[index] && 'bg-yellow-500 bg-opacity-70 rounded-sm shadow-sm w-fit',
-                'p-1 tracking-widest text-lg'
-              )}
-            >
-              <span className="text-teal-500">{wordsPrefixList[index]}</span>
-              <span>{wordsSuffixList[index]}</span>
-            </animated.p>
-          ))}
-        </main>
+        {gameStatus === 'newLevel' ? (
+          <main className="fixed p-0 -my-2.5 -mx-1.5 top-0 left-0 flex flex-col gap-y-10 items-center justify-center w-full h-full min-w-[100vw] min-h-screen z-50 bg-zinc-700 bg-opacity-60 text-center">
+            <h1 className="text-7xl tracking-wider font-medium">Prepare-se</h1>
+            <div className="text-7xl tracking-wider font-medium text-rose-500 motion-safe:animate-ping">
+              <Timer initialSeconds={Math.floor(DELAY_TO_START_NEW_LEVEL_MS / 1000)} />
+            </div>
+          </main>
+        ) : (
+          <main className="absolute w-full h-full -z-10">
+            {springs?.map((props, index) => (
+              <animated.p
+                style={props}
+                key={`ingame_word_${index}_${displayedWords[index]}`}
+                className={classNames(
+                  wordsPrefixList[index] && 'bg-yellow-500 bg-opacity-70 rounded-sm shadow-sm w-fit',
+                  'p-1 tracking-widest text-lg'
+                )}
+              >
+                <span className="text-teal-500">{wordsPrefixList[index]}</span>
+                <span>{wordsSuffixList[index]}</span>
+              </animated.p>
+            ))}
+          </main>
+        )}
         <input
           type="text"
           className="self-center block min-w-fit w-2/5 h-16 rounded-md border-0 py-1.5 mb-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-lg sm:leading-6"
