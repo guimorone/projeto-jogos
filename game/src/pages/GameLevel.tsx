@@ -1,21 +1,20 @@
-import { FC, useState, useEffect, memo, KeyboardEvent, ChangeEvent, Fragment } from 'react';
+import { FC, useState, useEffect, KeyboardEvent, ChangeEvent, Fragment } from 'react';
 import { useParams } from 'react-router-dom';
 import { Progress } from 'flowbite-react';
+import { useSprings, animated, config } from '@react-spring/web';
 import { Transition } from '@headlessui/react';
-import { useGameContext } from './Game';
-import { classNames } from '../utils';
-import { handleChangeWord, getMaxWordsInScreen } from '../utils/algorithm';
-import { useWindowSize } from '../utils/hooks';
+import { classNames, randomNumber } from '../utils';
+import { handleChangeWord } from '../utils/algorithm';
+import { useWindowSize, useGameContext } from '../utils/hooks';
 
 interface IFuncProps {}
 
 const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
-  const cancelKeys: Array<KeyboardEvent<HTMLInputElement>['key']> = ['Enter', 'Escape'];
+  const cancelKeys: KeyboardEvent<HTMLInputElement>['key'][] = ['Enter', 'Escape'];
 
   const { level } = useParams();
   const {
     words,
-    gameColumns,
     gameStatus,
     playerHealth,
     setPlayerHealth,
@@ -23,50 +22,106 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
     bossHealth,
     setBossHealth,
     bossMaxHealth,
+    totalWaves,
+    waveDelay,
+    countWordsInWave,
   } = useGameContext();
 
-  const { height } = useWindowSize();
+  const { width, height } = useWindowSize();
 
-  const [maxWordsInScreen, setMaxWordsInScreen] = useState<number>(getMaxWordsInScreen(height));
   const [wordsHitsNames, setWordsHitsNames] = useState<string[]>([]);
   const [wordsHits, setWordsHits] = useState<number>(0);
   const [points, setPoints] = useState<number>(0);
   const [wordWritten, setWordWritten] = useState<string>('');
   const [wordsPrefixList, setWordsPrefixList] = useState<string[]>([]);
   const [wordsSuffixList, setWordsSuffixList] = useState<string[]>([]);
+  const [displayedWords, setDisplayedWords] = useState<string[]>([]);
+  const [countWaves, setCountWaves] = useState<number>(0);
+  const [intervalId, setIntervalId] = useState<NodeJS.Timer>();
 
-  const getNewDisplayedWords = (maxIndex: number = maxWordsInScreen): string[] =>
-    words?.filter(w => !wordsHitsNames.includes(w)).slice(0, Math.min(words.length, maxIndex * gameColumns)) || [];
+  const [springs, springsApi] = useSprings(countWordsInWave * totalWaves, () => {
+    const gap = 100;
+    const fromX = randomNumber(gap, width - gap);
+    const fromY = randomNumber(-gap, 0);
 
-  const [displayedWords, setDisplayedWords] = useState<string[]>(getNewDisplayedWords());
+    return {
+      from: { x: fromX, y: fromY },
+      to: { x: fromX, y: height + gap / 2 },
+      config: config.molasses,
+    };
+  });
+
+  useEffect(() => {
+    switch (gameStatus) {
+      case 'running':
+        springsApi.resume();
+        break;
+      case 'newLevel':
+        springsApi.start();
+        break;
+      case 'paused':
+        springsApi.pause();
+        break;
+      default:
+        springsApi.stop();
+        break;
+    }
+  }, [gameStatus]);
+
+  const getNewDisplayedWords = (): string[] => {
+    const newDisplayedWords = [...displayedWords];
+
+    if (displayedWords.length < countWordsInWave * totalWaves)
+      for (let i = 1; i <= countWordsInWave; i++) {
+        let newWord = words[randomNumber(0, words.length)];
+        while (wordsHitsNames?.includes(newWord)) newWord = words[randomNumber(0, words.length)];
+
+        newDisplayedWords.push(newWord);
+      }
+
+    return newDisplayedWords;
+  };
+
+  const resetIntervalId = (): void => {
+    clearInterval(intervalId);
+    setIntervalId(undefined);
+  };
+
+  const updateWordsArrays = (): void => {
+    if (gameStatus === 'running') {
+      if (countWaves >= totalWaves && intervalId) {
+        resetIntervalId();
+        return;
+      }
+
+      const newDisplayedWords = getNewDisplayedWords();
+      const { prefixList, suffixList } = handleChangeWord(wordWritten, newDisplayedWords);
+
+      setDisplayedWords(newDisplayedWords);
+      setWordsPrefixList(prefixList);
+      setWordsSuffixList(suffixList);
+      setCountWaves(prev => prev + 1);
+    }
+  };
 
   const resetStates = (): void => {
-    const newDisplayedWords: string[] = getNewDisplayedWords();
-
-    // Se não for pra mostrar esses valores acumulados, só tirar os comentários abaixo que ai reseta
-    // setWordsHits(0);
-    // setPoints(0);
+    resetIntervalId();
     setWordWritten('');
-    setDisplayedWords(newDisplayedWords);
+    setCountWaves(0);
+    setDisplayedWords([]);
     setWordsPrefixList([]);
-    setWordsSuffixList(newDisplayedWords);
+    setWordsSuffixList([]);
   };
 
   const gotIt = (hitIndex: number): void => {
     if (hitIndex < 0 || hitIndex > displayedWords.length) return;
 
-    const newWordsHitsNames = [...wordsHitsNames];
-    newWordsHitsNames.push(displayedWords[hitIndex]);
+    // remove from screen
+    const newDisplayedWords = [...displayedWords];
+    newDisplayedWords.splice(hitIndex, 1);
 
-    const filteredWords = words.filter(w => !newWordsHitsNames.includes(w));
-    const newWords = [...displayedWords];
-    // Esse 5 é aleatório
-    if (maxWordsInScreen + wordsHits + 5 < filteredWords.length)
-      newWords.splice(hitIndex, 1, filteredWords[maxWordsInScreen + wordsHits + 5]);
-    else newWords.splice(hitIndex, 1);
-
-    setWordsHitsNames(newWordsHitsNames);
-    setDisplayedWords(newWords);
+    setDisplayedWords(newDisplayedWords);
+    setWordsHitsNames(prev => [...prev, displayedWords[hitIndex]]);
     setWordWritten('');
     setWordsHits(prev => prev + 1);
     setPoints(prev => prev + Math.ceil(Math.random() * 3) * levelParsed);
@@ -74,16 +129,16 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
   };
 
   useEffect(() => {
-    if (height) {
-      const newMaxWordsInScreen = getMaxWordsInScreen(height);
-
-      setMaxWordsInScreen(newMaxWordsInScreen);
-      setDisplayedWords(getNewDisplayedWords(newMaxWordsInScreen));
-    }
-  }, [height]);
-
-  useEffect(() => {
     resetStates();
+
+    if (countWaves < totalWaves && !intervalId) {
+      updateWordsArrays(); // first call without delay
+      setIntervalId(setInterval(updateWordsArrays, waveDelay * 1000));
+    }
+
+    // return () => {
+    //   resetIntervalId();
+    // };
   }, [level, words]);
 
   useEffect(() => {
@@ -107,12 +162,13 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
     if (wordWritten && cancelKeys.includes(e.key)) setWordWritten('');
   };
 
-  const getPlayerProgressHealth = (): number => (100 * playerHealth) / playerMaxHealth;
-  const getBossProgressHealth = (): number => (100 * bossHealth) / bossMaxHealth;
+  const getPlayerProgressBarHealth = (): number => (100 * playerHealth) / playerMaxHealth;
+  const getBossProgressBarHealth = (): number => (100 * bossHealth) / bossMaxHealth;
 
   return (
     <Transition
-      show={gameStatus === 'running'}
+      appear
+      show
       as={Fragment}
       enter="transform ease-out duration-300 transition"
       enterFrom="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
@@ -121,7 +177,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
       leaveFrom="opacity-100"
       leaveTo="opacity-0"
     >
-      <div className="md:-mt-9 flex flex-col justify-between h-full">
+      <div className="md:-mt-9 flex flex-col justify-between w-full h-full min-h-screen">
         <header className="flex flex-col w-full text-center items-center tracking-wider gap-y-1 md:gap-y-2.5">
           <div className="inline-flex gap-x-16 items-baseline">
             <h1 className="text-4xl font-black">Level {levelParsed}</h1>
@@ -137,7 +193,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
           <div className="inline-flex gap-x-4">
             <Progress
               className="!w-52"
-              progress={getPlayerProgressHealth()}
+              progress={getPlayerProgressBarHealth()}
               textLabel="Você"
               color="green"
               labelText
@@ -146,7 +202,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
             />
             <Progress
               className="!w-52"
-              progress={getBossProgressHealth()}
+              progress={getBossProgressBarHealth()}
               textLabel="Boss"
               color="red"
               labelText
@@ -155,32 +211,24 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
             />
           </div>
         </header>
-        <main
-          className={classNames(
-            // tentei fazer dessa forma mas não foi, n sei pq
-            // gameColumns > 0 && `grid-cols-${gameColumns}`
-            gameColumns === 1 && 'grid-cols-1',
-            gameColumns === 2 && 'grid-cols-2',
-            gameColumns === 3 && 'grid-cols-3',
-            'grid place-items-center p-10 gap-y-0.5 sm:gap-y-2 md:gap-y-4 lg:gap-y-6'
-          )}
-        >
-          {displayedWords?.map((w, index) => (
-            <p
+        <main className="absolute w-full h-full -z-10">
+          {springs?.map((props, index) => (
+            <animated.p
+              style={props}
+              key={`ingame_word_${index}_${displayedWords[index]}`}
               className={classNames(
-                wordsPrefixList[index] && 'bg-yellow-500 bg-opacity-70',
-                'p-1 rounded-sm shadow-sm tracking-widest text-lg'
+                wordsPrefixList[index] && 'bg-yellow-500 bg-opacity-70 rounded-sm shadow-sm w-fit',
+                'p-1 tracking-widest text-lg'
               )}
-              key={`${w}_ingame_word_${index}`}
             >
               <span className="text-teal-500">{wordsPrefixList[index]}</span>
               <span>{wordsSuffixList[index]}</span>
-            </p>
+            </animated.p>
           ))}
         </main>
         <input
           type="text"
-          className="self-center block min-w-fit w-2/5 h-16 rounded-md border-0 py-1.5 mb-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-lg sm:leading-6"
+          className="self-center block min-w-fit w-2/5 h-16 rounded-md border-0 py-1.5 mb-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-lg sm:leading-6"
           placeholder="Tente acertar todas as palavras!"
           value={wordWritten}
           onChange={handleChangeValue}
@@ -193,4 +241,4 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
   );
 };
 
-export default memo(GameLevel);
+export default GameLevel;

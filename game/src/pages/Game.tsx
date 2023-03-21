@@ -1,5 +1,5 @@
-import { useState, useEffect, memo, FC, Dispatch, SetStateAction } from 'react';
-import { Outlet, Link, useNavigate, useOutletContext } from 'react-router-dom';
+import { useState, useEffect, FC, Dispatch, SetStateAction } from 'react';
+import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline';
 import { Spinner } from 'flowbite-react';
 import { asyncReadLocalTxtFile, uniqueArray, shuffleArray } from '../utils';
@@ -11,6 +11,8 @@ import {
   INITIAL_BOSS_HEALTH,
   INITIAL_MIN_WORDS_LENGTH,
   INITIAL_MAX_WORDS_LENGTH,
+  INITIAL_WAVE_DELAY,
+  INITIAL_COUNT_WORDS_IN_WAVE,
 } from '../constants';
 import conjugations from '../assets/words/conjugations.txt';
 import dicio from '../assets/words/dicio.txt';
@@ -19,16 +21,18 @@ import words from '../assets/words/words.txt';
 
 type GameStatusOptions = 'starting' | 'paused' | 'running' | 'victory' | 'defeat' | 'gameOver' | 'newLevel';
 
-type OutletContextType = {
+export type OutletContextType = {
   words: string[];
   gameStatus: GameStatusOptions;
-  gameColumns: number;
   playerHealth: number;
   playerMaxHealth: number;
   setPlayerHealth: Dispatch<SetStateAction<number>>;
   bossHealth: number;
   setBossHealth: Dispatch<SetStateAction<number>>;
   bossMaxHealth: number;
+  totalWaves: number;
+  waveDelay: number;
+  countWordsInWave: number;
 };
 
 interface IFuncProps {}
@@ -37,12 +41,14 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
   const navigate = useNavigate();
 
   const [gameStatus, setGameStatus] = useState<GameStatusOptions>('starting');
-  const [gameColumns, setGameColumns] = useState<number>(1);
   const [level, setLevel] = useState<number>(0);
   const [playerHealth, setPlayerHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
   const [playerMaxHealth, setPlayerMaxHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
   const [bossHealth, setBossHealth] = useState<number>(INITIAL_BOSS_HEALTH);
   const [bossMaxHealth, setBossMaxHealth] = useState<number>(INITIAL_BOSS_HEALTH);
+  const [totalWaves, setTotalWaves] = useState<number>(2);
+  const [waveDelay, setWaveDelay] = useState<number>(INITIAL_WAVE_DELAY);
+  const [countWordsInWave, setCountWordsInWave] = useState<number>(INITIAL_COUNT_WORDS_IN_WAVE);
   const [wordsMinLength, setWordsMinLength] = useState<number>(INITIAL_MIN_WORDS_LENGTH);
   const [wordsMaxLength, setWordsMaxLength] = useState<number>(INITIAL_MAX_WORDS_LENGTH);
   const [wordsList, setWordsList] = useState<string[]>([]);
@@ -87,13 +93,23 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
   }, [gameStatus]);
 
   const newLevelRules = (): void => {
-    const { newPlayerHealth, newBossHealth, minWordsLength, maxWordsLength, gameColumns } = gameRules(level);
+    const {
+      newPlayerHealth,
+      newBossHealth,
+      minWordsLength,
+      maxWordsLength,
+      newTotalWaves,
+      newWaveDelay,
+      newCountWordsInWave,
+    } = gameRules(level);
 
-    setGameColumns(gameColumns);
     setPlayerHealth(newPlayerHealth);
     setPlayerMaxHealth(newPlayerHealth);
     setBossHealth(newBossHealth);
     setBossMaxHealth(newBossHealth);
+    setTotalWaves(newTotalWaves);
+    setWaveDelay(newWaveDelay);
+    setCountWordsInWave(newCountWordsInWave);
     setWordsMinLength(minWordsLength);
     setWordsMaxLength(maxWordsLength);
   };
@@ -161,13 +177,15 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
           context={{
             words: sentWordsList,
             gameStatus,
-            gameColumns,
             playerHealth,
             setPlayerHealth,
             playerMaxHealth,
             bossHealth,
             setBossHealth,
             bossMaxHealth,
+            totalWaves,
+            waveDelay,
+            countWordsInWave,
           }}
         />
       ) : null}
@@ -175,8 +193,4 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
   );
 };
 
-export function useGameContext(): OutletContextType {
-  return useOutletContext<OutletContextType>();
-}
-
-export default memo(Game);
+export default Game;
