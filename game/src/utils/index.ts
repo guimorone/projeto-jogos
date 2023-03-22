@@ -63,6 +63,15 @@ export function shuffleArray(array: any[]): any[] {
   return array;
 }
 
+export function isStrangeString(str: string): boolean {
+  const repeatedRegex: RegExp = /(.).*\1/;
+  const onlyConsonantRegex: RegExp = /^[^aeiou]+$/i;
+
+  return new RegExp(repeatedRegex.source + '|' + onlyConsonantRegex.source).test(str);
+}
+
+export const removeStrangeStrings = (array: string[]) => array.filter(str => !isStrangeString(str));
+
 export function randomNumber(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min)) + min;
 }

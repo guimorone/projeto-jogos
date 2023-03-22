@@ -57,7 +57,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
               <h3 className="text-lg font-semibold">
                 {props.wordsSent?.length} {props.wordsSent?.length === 1 ? 'palavra enviada' : 'palavras enviadas'}
               </h3>
-              <div className="grid grid-cols-3 place-items-start gap-1">
+              <div className="grid grid-cols-6 place-items-start gap-1">
                 {props.wordsSent?.map((word: string, index: number) => (
                   <p key={`wordsSentStatus_${word}_${index}`} className="capitalize">
                     {word}
@@ -71,7 +71,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
               <h3 className="text-lg font-semibold">
                 {props.wordsHits} {props.wordsHits === 1 ? 'palavra acertada' : 'palavras acertadas'}
               </h3>
-              <ol className="grid grid-cols-2 place-items-start gap-y-1 gap-x-3 list-decimal">
+              <ol className="grid grid-cols-3 place-items-start gap-y-1 gap-x-3 list-decimal">
                 {props.wordsHitsNames?.map((word: string, index: number) => (
                   <li key={`wordsHitsNamesStatus_${word}_${index}`} className="capitalize pl-0.5">
                     {word}
@@ -102,7 +102,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
                 <h3 className="text-lg font-semibold">
                   {props.wordsSent?.length} {props.wordsSent?.length === 1 ? 'palavra enviada' : 'palavras enviadas'}
                 </h3>
-                <div className="grid grid-cols-3 place-items-start gap-1">
+                <div className="grid grid-cols-6 place-items-start gap-1">
                   {props.wordsSent?.map((word: string, index: number) => (
                     <p key={`wordsSentStatus_${word}_${index}`} className="capitalize">
                       {word}
@@ -116,7 +116,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
                 <h3 className="text-lg font-semibold">
                   {props.wordsHits} {props.wordsHits === 1 ? 'palavra acertada' : 'palavras acertadas'}
                 </h3>
-                <ol className="grid grid-cols-2 place-items-start gap-y-1 gap-x-3 list-decimal">
+                <ol className="grid grid-cols-3 place-items-start gap-y-1 gap-x-3 list-decimal">
                   {props.wordsHitsNames?.map((word: string, index: number) => (
                     <li key={`wordsHitsNamesStatus_${word}_${index}`} className="capitalize pl-0.5">
                       {word}
@@ -141,7 +141,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
                   {props.totalWordsSent?.length}
                   {props.totalWordsSent?.length === 1 ? ' palavra enviada' : ' palavras enviadas'}
                 </h3>
-                <div className="grid grid-cols-3 place-items-start gap-1">
+                <div className="grid grid-cols-6 place-items-start gap-1">
                   {props.totalWordsSent?.map((word: string, index: number) => (
                     <p key={`totalWordsSentStatus_${word}_${index}`} className="capitalize">
                       {word}
@@ -155,7 +155,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
                 <h3 className="text-lg font-semibold">
                   {props.totalWordsHits} {props.totalWordsHits === 1 ? 'palavra acertada' : 'palavras acertadas'}
                 </h3>
-                <ol className="grid grid-cols-2 place-items-start gap-y-1 gap-x-3 list-decimal">
+                <ol className="grid grid-cols-3 place-items-start gap-y-1 gap-x-3 list-decimal">
                   {props.totalWordsHitsNames?.map((word: string, index: number) => (
                     <li key={`totalWordsHitsNamesStatus_${word}_${index}`} className="capitalize pl-0.5">
                       {word}
@@ -187,7 +187,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
                 <h3 className="text-lg font-semibold">
                   {props.wordsSent?.length} {props.wordsSent?.length === 1 ? 'palavra enviada' : 'palavras enviadas'}
                 </h3>
-                <div className="grid grid-cols-3 place-items-start gap-1">
+                <div className="grid grid-cols-6 place-items-start gap-1">
                   {props.wordsSent?.map((word: string, index: number) => (
                     <p key={`wordsSentStatus_${word}_${index}`} className="capitalize">
                       {word}
@@ -201,7 +201,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
                 <h3 className="text-lg font-semibold">
                   {props.wordsHits} {props.wordsHits === 1 ? 'palavra acertada' : 'palavras acertadas'}
                 </h3>
-                <ol className="grid grid-cols-2 place-items-start gap-y-1 gap-x-3 list-decimal">
+                <ol className="grid grid-cols-3 place-items-start gap-y-1 gap-x-3 list-decimal">
                   {props.wordsHitsNames?.map((word: string, index: number) => (
                     <li key={`wordsHitsNamesStatus_${word}_${index}`} className="capitalize pl-0.5">
                       {word}
@@ -226,7 +226,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
                   {props.totalWordsSent?.length}
                   {props.totalWordsSent?.length === 1 ? ' palavra enviada' : ' palavras enviadas'}
                 </h3>
-                <div className="grid grid-cols-3 place-items-start gap-1">
+                <div className="grid grid-cols-6 place-items-start gap-1">
                   {props.totalWordsSent?.map((word: string, index: number) => (
                     <p key={`totalWordsSentStatus_${word}_${index}`} className="capitalize">
                       {word}
@@ -241,7 +241,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
                   {props.totalWordsHits}
                   {props.totalWordsHits === 1 ? ' palavra acertada' : ' palavras acertadas'}
                 </h3>
-                <ol className="grid grid-cols-2 place-items-start gap-y-1 gap-x-3 list-decimal">
+                <ol className="grid grid-cols-3 place-items-start gap-y-1 gap-x-3 list-decimal">
                   {props.totalWordsHitsNames?.map((word: string, index: number) => (
                     <li key={`totalWordsHitsNamesStatus_${word}_${index}`} className="capitalize pl-0.5">
                       {word}
@@ -270,7 +270,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
       leaveFrom="opacity-100"
       leaveTo="opacity-0"
     >
-      <div className="fixed p-0 -my-2.5 -mx-1.5 top-0 left-0 flex flex-col items-center justify-center w-full h-full min-w-[100vw] min-h-screen z-50 bg-zinc-700 bg-opacity-60 text-center">
+      <div className="overflow-auto fixed p-0 -my-2.5 -mx-1.5 top-0 left-0 flex flex-col items-center justify-center w-full h-full min-w-[100vw] min-h-screen z-50 bg-zinc-700 bg-opacity-60 text-center">
         {components[props.status]}
       </div>
     </Transition>

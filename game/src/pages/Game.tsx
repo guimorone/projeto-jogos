@@ -2,7 +2,7 @@ import { useState, useEffect, FC, Dispatch, SetStateAction } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlayIcon, PauseIcon, ArrowPathIcon, ForwardIcon } from '@heroicons/react/24/outline';
 import { Spinner } from 'flowbite-react';
-import { asyncReadLocalTxtFile, uniqueArray, shuffleArray } from '../utils';
+import { asyncReadLocalTxtFile, uniqueArray, shuffleArray, removeStrangeStrings } from '../utils';
 import { gameRules } from '../utils/algorithm';
 import {
   MAX_LEVEL,
@@ -80,7 +80,9 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
 
         Promise.all([conjPromise, dicioPromise, verbsPromise, wordsPromise])
           .then(([conjData, dicioData, verbsData, wordsData]) => {
-            const newWordsList = uniqueArray([...conjData, ...dicioData, ...verbsData, ...wordsData]);
+            const newWordsList = removeStrangeStrings(
+              uniqueArray([...conjData, ...dicioData, ...verbsData, ...wordsData])
+            );
 
             setWordsList(newWordsList);
             setSentWordsList(
@@ -91,7 +93,6 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
           })
           .catch(err => console.error(`Error in "load all words" step!\n${err}`))
           .finally(() => setLevel(1));
-
         break;
       case 'victory':
         if (level >= MAX_LEVEL) setGameStatus('gameOver');
