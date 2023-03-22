@@ -3,23 +3,25 @@ import { useState, useEffect, FC } from 'react';
 interface IFuncProps {
   initialSeconds?: number;
   initialMinute?: number;
+  intervalTimerMS?: number;
 }
 
-const Timer: FC<IFuncProps> = ({ initialSeconds = 0, initialMinute = 0 }: IFuncProps) => {
+// Era pra ser intervalTimerMS = 1000, mas ta tendo algum delay na animação
+const Timer: FC<IFuncProps> = ({ initialSeconds = 0, initialMinute = 0, intervalTimerMS = 920 }: IFuncProps) => {
   const [minutes, setMinutes] = useState<number>(initialMinute);
   const [seconds, setSeconds] = useState<number>(initialSeconds);
 
   useEffect(() => {
     const myInterval = setInterval(() => {
       if (seconds > 0) setSeconds(seconds - 1);
-      else if (seconds === 0) {
-        if (minutes === 0) clearInterval(myInterval);
+      else {
+        if (!minutes) clearInterval(myInterval);
         else {
           setMinutes(minutes - 1);
           setSeconds(59);
         }
       }
-    }, 1000);
+    }, intervalTimerMS);
     return () => {
       clearInterval(myInterval);
     };

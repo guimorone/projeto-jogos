@@ -1,6 +1,6 @@
 import { useState, useEffect, FC, Dispatch, SetStateAction } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon, PlayIcon, PauseIcon } from '@heroicons/react/24/outline';
+import { ArrowLeftIcon, PlayIcon, PauseIcon, ArrowPathIcon, ForwardIcon } from '@heroicons/react/24/outline';
 import { Spinner } from 'flowbite-react';
 import { asyncReadLocalTxtFile, uniqueArray, shuffleArray } from '../utils';
 import { gameRules } from '../utils/algorithm';
@@ -8,7 +8,6 @@ import {
   MAX_LEVEL,
   DELAY_TO_START_NEW_LEVEL_MS,
   INITIAL_PLAYER_HEALTH,
-  INITIAL_BOSS_HEALTH,
   INITIAL_MIN_WORDS_LENGTH,
   INITIAL_MAX_WORDS_LENGTH,
   INITIAL_TOTAL_WAVES,
@@ -21,7 +20,7 @@ import dicio from '../assets/words/dicio.txt';
 import verbs from '../assets/words/verbs.txt';
 import words from '../assets/words/words.txt';
 
-type GameStatusOptions = 'starting' | 'paused' | 'running' | 'victory' | 'defeat' | 'gameOver' | 'newLevel';
+export type GameStatusOptions = 'starting' | 'paused' | 'running' | 'victory' | 'defeat' | 'gameOver' | 'newLevel';
 
 export type OutletContextType = {
   words: string[];
@@ -48,8 +47,8 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
   const [level, setLevel] = useState<number>(0);
   const [playerHealth, setPlayerHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
   const [playerMaxHealth, setPlayerMaxHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
-  const [bossHealth, setBossHealth] = useState<number>(INITIAL_BOSS_HEALTH);
-  const [bossMaxHealth, setBossMaxHealth] = useState<number>(INITIAL_BOSS_HEALTH);
+  const [bossHealth, setBossHealth] = useState<number>(INITIAL_COUNT_WORDS_IN_WAVE * INITIAL_TOTAL_WAVES);
+  const [bossMaxHealth, setBossMaxHealth] = useState<number>(INITIAL_COUNT_WORDS_IN_WAVE * INITIAL_TOTAL_WAVES);
   const [totalWaves, setTotalWaves] = useState<number>(INITIAL_TOTAL_WAVES);
   const [waveDelay, setWaveDelay] = useState<number>(INITIAL_WAVE_DELAY);
   const [countWordsInWave, setCountWordsInWave] = useState<number>(INITIAL_COUNT_WORDS_IN_WAVE);
@@ -85,12 +84,6 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
         break;
       case 'victory':
         if (level >= MAX_LEVEL) setGameStatus('gameOver');
-        else setLevel(prevLevel => prevLevel + 1);
-
-        break;
-      case 'gameOver':
-        alert('max level reached');
-        navigate('/');
         break;
       default:
         break;
@@ -129,8 +122,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
 
   useEffect(() => {
     if (level > 0) {
-      if (level > 1) newLevelRules();
-
+      newLevelRules();
       setGameStatus('newLevel');
       setTimeout(setGameStatus, DELAY_TO_START_NEW_LEVEL_MS, 'running');
       navigate(level.toString());
@@ -144,7 +136,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
 
   return (
     <div className="relative p-1.5 w-full h-full min-h-screen bg-gradient-to-t from-violet-900 to-sky-900">
-      <header className="flex justify-between">
+      <header className="flex justify-between sm:mx-0.5">
         <Link
           to="/"
           className="z-50 min-w-fit sm:w-24 p-1 md:px-3 md:py-1.5 flex flex-wrap justify-between bg-rose-900 bg-opacity-100 hover:bg-opacity-70 rounded-full shadow-sm"
@@ -168,9 +160,25 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
             <PauseIcon aria-hidden className="w-5 h-5 sm:w-7 sm:h-7" />
             <span className="font-bold text-sm sm:text-lg">Pausar</span>
           </button>
+        ) : gameStatus === 'victory' ? (
+          <button
+            className="z-50 min-w-fit sm:w-44 p-1 md:px-3 md:py-1.5 flex flex-wrap justify-between bg-yellow-500 bg-opacity-100 hover:bg-opacity-70 rounded-full shadow-sm motion-safe:animate-bounce hover:animate-none"
+            onClick={() => setLevel(prev => prev + 1)}
+          >
+            <ForwardIcon aria-hidden className="w-5 h-5 sm:w-7 sm:h-7" />
+            <span className="font-bold text-sm sm:text-lg">Próximo nível</span>
+          </button>
+        ) : gameStatus === 'defeat' || gameStatus === 'gameOver' ? (
+          <button
+            className="z-50 min-w-fit sm:w-36 p-1 md:px-3 md:py-1.5 flex flex-wrap justify-between bg-yellow-500 bg-opacity-100 hover:bg-opacity-70 rounded-full shadow-sm motion-safe:animate-bounce hover:animate-none"
+            onClick={() => setLevel(1)}
+          >
+            <ArrowPathIcon aria-hidden className="w-5 h-5 sm:w-7 sm:h-7" />
+            <span className="font-bold text-sm sm:text-lg">Reiniciar</span>
+          </button>
         ) : null}
       </header>
-      {level <= 0 ? (
+      {level <= 0 || gameStatus === 'starting' ? (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
           <div className="flex flex-col gap-y-1.5 items-center justify-center">
             <h4 className="font-medium text-lg leading-snug uppercase tracking-widest antialiased">
@@ -179,7 +187,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
             <Spinner color="purple" size="xl" aria-label="Loading words" />
           </div>
         </div>
-      ) : level <= MAX_LEVEL && gameStatus !== 'gameOver' ? (
+      ) : level <= MAX_LEVEL ? (
         <Outlet
           context={{
             words: sentWordsList,

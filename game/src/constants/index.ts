@@ -3,7 +3,6 @@ export const REPO_URL: Readonly<string> = 'https://github.com/guimorone/projeto-
 export const MAX_LEVEL: Readonly<number> = 5;
 export const DELAY_TO_START_NEW_LEVEL_MS: Readonly<number> = 3000; // ms
 export const INITIAL_PLAYER_HEALTH: Readonly<number> = 10;
-export const INITIAL_BOSS_HEALTH: Readonly<number> = 30;
 export const INITIAL_MIN_WORDS_LENGTH: Readonly<number> = 3;
 export const INITIAL_MAX_WORDS_LENGTH: Readonly<number> = 5;
 export const INITIAL_TOTAL_WAVES: Readonly<number> = 2;
