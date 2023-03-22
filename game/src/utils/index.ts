@@ -1,3 +1,5 @@
+import { IntRange } from '../@types';
+
 export function formatNumber(
   value: number,
   style: 'decimal' | 'currency' | 'percent' | 'unit' = 'decimal',
@@ -63,4 +65,8 @@ export function shuffleArray(array: any[]): any[] {
 
 export function randomNumber(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min)) + min;
+}
+
+export function randomPercentForTrue(percentage: IntRange<0, 101> = 50): boolean {
+  return randomNumber(1, 100) <= percentage;
 }
