@@ -4,21 +4,25 @@ import { Progress } from 'flowbite-react';
 import { useSprings, animated, config } from '@react-spring/web';
 import { Transition } from '@headlessui/react';
 import GameStatusComponent from '../components/GameStatus';
-import { classNames, randomNumber, randomPercentForTrue } from '../utils';
+import { classNames, randomNumber, randomPercentForTrue, normalizeValue } from '../utils';
 import { handleChangeWord } from '../utils/algorithm';
 import { useWindowSize, useGameContext } from '../utils/hooks';
-import { DELAY_TO_START_NEW_LEVEL_MS } from '../constants';
+import {
+  DELAY_TO_START_NEW_LEVEL_MS,
+  AXLE_GAP,
+  POINTS_FOR_DIAGONAL_VALUES,
+  POINTS_FOR_NON_NORMALIZED_VALUES,
+  CANCEL_KEYS,
+} from '../constants';
 
 interface IFuncProps {}
 
 const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
-  const diagonalMultiplyPoints: Readonly<number> = 5;
-  const cancelKeys: Readonly<KeyboardEvent<HTMLInputElement>['key'][]> = ['Enter', 'Escape'];
-
   const { level } = useParams();
   const {
     words,
     gameStatus,
+    setGameStatus,
     playerHealth,
     setPlayerHealth,
     playerMaxHealth,
@@ -48,25 +52,23 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
   const [springs, springsApi] = useSprings(countWordsInWave * totalWaves, (index: number) => {
     let isDiagonal: boolean = false;
     if (diagonalIndexes?.length < maxDiagonalCountWords && !diagonalIndexes?.includes(index))
-      isDiagonal = randomPercentForTrue(80);
+      isDiagonal = randomPercentForTrue();
 
     const wave = Math.floor(index / countWordsInWave);
-    const gap = 175;
-    const fromX = randomNumber(gap, width - gap);
-    const fromY = randomNumber(-3 * gap, -gap);
-    const duration = wordsSpeed;
+    const fromX = randomNumber(AXLE_GAP, width - AXLE_GAP);
+    const fromY = randomNumber(-3 * AXLE_GAP, -AXLE_GAP);
     let chooseDiagonalX = undefined;
     if (isDiagonal) {
       setDiagonalIndexes(prev => [...prev, index]);
-      do chooseDiagonalX = randomNumber(gap, width - gap);
-      while (chooseDiagonalX >= fromX - gap && chooseDiagonalX <= fromX + gap);
+      do chooseDiagonalX = randomNumber(AXLE_GAP, width - AXLE_GAP);
+      while (chooseDiagonalX >= fromX - AXLE_GAP && chooseDiagonalX <= fromX + AXLE_GAP);
     }
 
     const from = { x: fromX, y: fromY };
-    const to = { x: isDiagonal && chooseDiagonalX !== undefined ? chooseDiagonalX : fromX, y: height + gap / 10 };
+    const to = { x: isDiagonal && chooseDiagonalX !== undefined ? chooseDiagonalX : fromX, y: height + AXLE_GAP / 10 };
     const delay = DELAY_TO_START_NEW_LEVEL_MS + 500 + wave * waveDelay;
 
-    return { from, to, delay, config: { ...config.molasses, duration } };
+    return { from, to, delay, config: { ...config.molasses, duration: wordsSpeed } };
   });
 
   useEffect(() => {
@@ -124,17 +126,50 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
 
     const wordHit = displayedWords[hitIndex];
 
+    const normalizedWordHit = normalizeValue(wordHit);
+    const isNormalized: boolean = wordHit === normalizedWordHit;
+    const isDiagonal = diagonalIndexes?.includes(hitIndex);
+
     setWordsHitsNames(prev => [...prev, wordHit]);
     setWordWritten('');
     setWordsHits(prev => prev + 1);
     setPoints(
-      prev => prev + (diagonalIndexes?.includes(hitIndex) ? diagonalMultiplyPoints : 1) * levelParsed * wordHit.length
+      prev =>
+        prev +
+        (isDiagonal ? POINTS_FOR_DIAGONAL_VALUES : 1) *
+          (isNormalized ? 1 : POINTS_FOR_NON_NORMALIZED_VALUES) *
+          levelParsed *
+          wordHit.length
     );
   };
 
-  const missedIt = (): void => {
+  const missedIt = (missedIndex: number): void => {
+    if (missedIndex < 0 || missedIndex >= displayedWords.length) return;
+
+    const missedWord = displayedWords[missedIndex];
+    if (wordsHitsNames?.includes(missedWord)) return;
+
+    setDisplayedWords(prev => prev.filter((_, index) => index !== missedIndex));
     setPlayerHealth(prev => prev - playerLossHealth);
   };
+
+  useEffect(() => {
+    if (
+      (gameStatus === 'running' || gameStatus === 'paused') &&
+      (playerHealth <= 0 || wordsHits + displayedWords?.length >= countWordsInWave * totalWaves)
+    )
+      setGameStatus('levelDone');
+  }, [playerHealth, displayedWords, wordsHits, gameStatus]);
+
+  useEffect(() => {
+    springs?.forEach((spring, index) => {
+      const x = spring.x.get(),
+        y = spring.y.get();
+
+      // sair por baixo ou pelos lados
+      if (y > height || ((x < 0 || x > width) && y > AXLE_GAP)) missedIt(index);
+    });
+  }, [springs]);
 
   useEffect(() => {
     resetStates();
@@ -158,7 +193,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
   const handleChangeValue = (e: ChangeEvent<HTMLInputElement>): void => setWordWritten(e.target.value);
 
   const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>): void => {
-    if (wordWritten && cancelKeys.includes(e.key)) setWordWritten('');
+    if (wordWritten && CANCEL_KEYS.includes(e.key)) setWordWritten('');
   };
 
   const getPlayerProgressBarHealth = (): number => (100 * playerHealth) / playerMaxHealth;
@@ -219,7 +254,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
         <header
           className={classNames(
             gameStatus !== 'running' ? 'opacity-20' : 'opacity-100',
-            'flex flex-col w-full text-center items-center tracking-wider gap-y-1 md:gap-y-2.5'
+            'flex flex-col w-full text-center items-center tracking-wider gap-y-1 md:gap-y-2.5 -z-20'
           )}
         >
           <div className="inline-flex gap-x-16 items-baseline">
@@ -257,7 +292,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
                   wordsHitsNames?.includes(displayedWords[index]) &&
                     'motion-safe:animate-spin transition duration-300 ease-in-out opacity-0 bg-gradient-to-r from-teal-400 to-teal-700',
                   wordsPrefixList[index] && 'bg-yellow-500 bg-opacity-70',
-                  'p-2 tracking-widest text-xl w-fit rounded-xl shadow-sm'
+                  'overflow-hidden relative p-2 tracking-widest text-xl w-fit rounded-xl shadow-sm'
                 )}
               >
                 <span className="text-teal-600">{wordsPrefixList[index]}</span>

@@ -35,6 +35,7 @@ export type GameStatusOptions =
 export type OutletContextType = {
   words: string[];
   gameStatus: GameStatusOptions;
+  setGameStatus: Dispatch<SetStateAction<GameStatusOptions>>;
   playerHealth: number;
   playerMaxHealth: number;
   setPlayerHealth: Dispatch<SetStateAction<number>>;
@@ -102,7 +103,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
       default:
         break;
     }
-  }, [playerHealth, gameStatus]);
+  }, [gameStatus]);
 
   // listen if application is being viewed
   const onFocusFunction = () => {
@@ -225,6 +226,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
           context={{
             words: sentWordsList,
             gameStatus,
+            setGameStatus,
             playerHealth,
             setPlayerHealth,
             playerMaxHealth,

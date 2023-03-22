@@ -1,3 +1,5 @@
+import { KeyboardEvent } from 'react';
+
 export const GAME_NAME: Readonly<string> = 'Type War';
 export const REPO_URL: Readonly<string> = 'https://github.com/guimorone/projeto-jogos';
 export const MAX_LEVEL: Readonly<number> = 5;
@@ -6,8 +8,12 @@ export const INITIAL_PLAYER_HEALTH: Readonly<number> = 20;
 export const INITIAL_PLAYER_LOSS_HEALTH: Readonly<number> = 2;
 export const INITIAL_MIN_WORDS_LENGTH: Readonly<number> = 3;
 export const INITIAL_MAX_WORDS_LENGTH: Readonly<number> = 5;
-export const INITIAL_MAX_DIAGONAL_COUNT_WORDS: Readonly<number> = 5;
+export const INITIAL_MAX_DIAGONAL_COUNT_WORDS: Readonly<number> = 1;
 export const INITIAL_TOTAL_WAVES: Readonly<number> = 3;
-export const INITIAL_WAVE_DELAY: Readonly<number> = 2000; // ms
+export const INITIAL_WAVE_DELAY: Readonly<number> = 10000; // ms
 export const INITIAL_COUNT_WORDS_IN_WAVE: Readonly<number> = 4;
-export const INITIAL_WORDS_SPEED: Readonly<number> = 12500; // ms
+export const INITIAL_WORDS_SPEED: Readonly<number> = 20000; // ms
+export const AXLE_GAP: Readonly<number> = 175;
+export const POINTS_FOR_DIAGONAL_VALUES: Readonly<number> = 5;
+export const POINTS_FOR_NON_NORMALIZED_VALUES: Readonly<number> = 2;
+export const CANCEL_KEYS: Readonly<KeyboardEvent<HTMLInputElement>['key'][]> = ['Enter', 'Escape'];
