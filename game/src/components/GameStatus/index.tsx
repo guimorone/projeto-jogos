@@ -63,14 +63,12 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
           <li>
             <div className="flex flex-col gap-y-2">
               <h3 className="text-lg font-semibold">Palavras acertadas</h3>
-              <ol className="list-decimal marker:text-sky-200">
-                <div className="grid grid-cols-2 place-items-start gap-y-1 gap-x-3">
-                  {props.wordsHitsNames?.map((word: string, index: number) => (
-                    <li key={`wordsHitsNamesStatus_${word}_${index}`} className="capitalize pl-0.5">
-                      {word}
-                    </li>
-                  ))}
-                </div>
+              <ol className="grid grid-cols-2 place-items-start gap-y-1 gap-x-3 list-decimal marker:text-sky-200">
+                {props.wordsHitsNames?.map((word: string, index: number) => (
+                  <li key={`wordsHitsNamesStatus_${word}_${index}`} className="capitalize pl-0.5">
+                    {word}
+                  </li>
+                ))}
               </ol>
             </div>
           </li>
@@ -98,7 +96,9 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
               <h3 className="text-lg font-semibold">Palavras enviadas</h3>
               <div className="grid grid-cols-3 place-items-start gap-1">
                 {props.wordsSent?.map((word: string, index: number) => (
-                  <p key={`wordsSentStatus_${word}_${index}`}>{word}</p>
+                  <p key={`wordsSentStatus_${word}_${index}`} className="capitalize">
+                    {word}
+                  </p>
                 ))}
               </div>
             </div>
@@ -106,11 +106,13 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
           <li>
             <div className="flex flex-col gap-y-2">
               <h3 className="text-lg font-semibold">Palavras acertadas</h3>
-              <div className="grid grid-cols-3 place-items-start gap-1">
+              <ol className="grid grid-cols-2 place-items-start gap-y-1 gap-x-3 list-decimal marker:text-sky-200">
                 {props.wordsHitsNames?.map((word: string, index: number) => (
-                  <p key={`wordsHitsNamesStatus_${word}_${index}`}>{word}</p>
+                  <li key={`wordsHitsNamesStatus_${word}_${index}`} className="capitalize pl-0.5">
+                    {word}
+                  </li>
                 ))}
-              </div>
+              </ol>
             </div>
           </li>
         </ul>
