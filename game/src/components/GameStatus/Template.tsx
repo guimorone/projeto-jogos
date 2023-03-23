@@ -1,7 +1,6 @@
 import { FC } from 'react';
 import { classNames } from '../../utils';
-import type { LevelDoneType } from '.';
-import type { GameStatusOptions } from '../../pages/Game';
+import type { LevelDoneType, GameStatusOptions } from '../../@types';
 
 interface IFuncProps {
   status: GameStatusOptions;

@@ -1,7 +1,8 @@
-import { useState, useEffect, FC, Dispatch, SetStateAction } from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, FC } from 'react';
+import { Link } from 'react-router-dom';
 import { ArrowLeftIcon, PlayIcon, PauseIcon, ArrowPathIcon, ForwardIcon } from '@heroicons/react/24/outline';
 import { Spinner } from 'flowbite-react';
+import GameLevel from './GameLevel';
 import { asyncReadLocalTxtFile, uniqueArray, shuffleArray, removeStrangeStrings } from '../utils';
 import { gameRules } from '../utils/algorithm';
 import {
@@ -21,38 +22,11 @@ import conjugations from '../assets/words/conjugations.txt';
 import dicio from '../assets/words/dicio.txt';
 import verbs from '../assets/words/verbs.txt';
 import words from '../assets/words/words.txt';
-
-export type GameStatusOptions =
-  | 'starting'
-  | 'paused'
-  | 'running'
-  | 'victory'
-  | 'defeat'
-  | 'gameOver'
-  | 'newLevel'
-  | 'levelDone';
-
-export type OutletContextType = {
-  words: string[];
-  gameStatus: GameStatusOptions;
-  setGameStatus: Dispatch<SetStateAction<GameStatusOptions>>;
-  playerHealth: number;
-  playerMaxHealth: number;
-  setPlayerHealth: Dispatch<SetStateAction<number>>;
-  playerLossHealth: number;
-  maxDiagonalCountWords: number;
-  bossMaxHealth: number;
-  totalWaves: number;
-  waveDelay: number;
-  countWordsInWave: number;
-  wordsSpeed: number;
-};
+import type { GameStatusOptions } from '../@types';
 
 interface IFuncProps {}
 
 const Game: FC<IFuncProps> = ({}: IFuncProps) => {
-  const navigate = useNavigate();
-
   const [gameStatus, setGameStatus] = useState<GameStatusOptions>('starting');
   const [level, setLevel] = useState<number>(0);
   const [playerHealth, setPlayerHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
@@ -165,7 +139,6 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
       newLevelRules();
       setGameStatus('newLevel');
       setTimeout(setGameStatus, DELAY_TO_START_NEW_LEVEL_MS, 'running');
-      navigate(level.toString());
     } else if (gameStatus !== 'starting') setLevel(1);
   }, [level]);
 
@@ -223,21 +196,20 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
           </div>
         </div>
       ) : (
-        <Outlet
-          context={{
-            words: sentWordsList,
-            gameStatus,
-            setGameStatus,
-            playerHealth,
-            setPlayerHealth,
-            playerMaxHealth,
-            playerLossHealth,
-            maxDiagonalCountWords,
-            totalWaves,
-            waveDelay,
-            countWordsInWave,
-            wordsSpeed,
-          }}
+        <GameLevel
+          level={level}
+          words={sentWordsList}
+          gameStatus={gameStatus}
+          setGameStatus={setGameStatus}
+          playerHealth={playerHealth}
+          setPlayerHealth={setPlayerHealth}
+          playerMaxHealth={playerMaxHealth}
+          playerLossHealth={playerLossHealth}
+          maxDiagonalCountWords={maxDiagonalCountWords}
+          totalWaves={totalWaves}
+          waveDelay={waveDelay}
+          countWordsInWave={countWordsInWave}
+          wordsSpeed={wordsSpeed}
         />
       )}
     </div>

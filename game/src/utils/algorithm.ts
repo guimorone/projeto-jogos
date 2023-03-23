@@ -9,6 +9,8 @@ import {
   INITIAL_WAVE_DELAY,
   INITIAL_COUNT_WORDS_IN_WAVE,
   INITIAL_WORDS_SPEED,
+  POINTS_FOR_DIAGONAL_VALUES,
+  POINTS_FOR_NON_NORMALIZED_VALUES,
 } from '../constants';
 
 export const handleChangeWord = (
@@ -59,3 +61,14 @@ export const gameRules = (
   newCountWordsInWave: INITIAL_COUNT_WORDS_IN_WAVE + Math.ceil(1.5 * (level - 1)),
   newWordsSpeed: INITIAL_WORDS_SPEED - 1000 * (level - 1), // quanto menor mais rápido, seria o tempo na verdade e não velocidade
 });
+
+export const getPointsGained = (
+  level: number,
+  wordHitLength: number,
+  isDiagonal: boolean,
+  isNormalized: boolean
+): number =>
+  level *
+  wordHitLength *
+  (isDiagonal ? POINTS_FOR_DIAGONAL_VALUES : 1) *
+  (isNormalized ? 1 : POINTS_FOR_NON_NORMALIZED_VALUES);

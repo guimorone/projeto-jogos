@@ -1,30 +1,8 @@
-import { ComponentProps, FC, ReactElement, Fragment } from 'react';
+import { FC, ReactElement, Fragment } from 'react';
 import { Transition } from '@headlessui/react';
-import type { GameStatusOptions } from '../../pages/Game';
-import Timer from './Timer';
+import Timer from '../Timer';
 import Template from './Template';
-
-export type NewLevelType = { initialSeconds: ComponentProps<typeof Timer>['initialSeconds'] };
-
-type CommomEndLevel = { wordsHitsNames: string[]; wordsMissedNames: string[]; points: number };
-type VictoryType = CommomEndLevel & {};
-type DefeatType = CommomEndLevel & {
-  totalWordsHitsNames: string[];
-  totalWordsMissedNames: string[];
-  totalPoints: number;
-};
-type GameOverType = CommomEndLevel & {
-  totalWordsHitsNames: string[];
-  totalWordsMissedNames: string[];
-  totalPoints: number;
-};
-
-type TitleType = { status: GameStatusOptions };
-type StatusType = (NewLevelType | undefined) &
-  (VictoryType | undefined) &
-  (DefeatType | undefined) &
-  (GameOverType | undefined);
-export type LevelDoneType = (VictoryType | undefined) & (DefeatType | undefined) & (GameOverType | undefined);
+import type { GameStatusOptions, TitleType, StatusType } from '../../@types';
 
 interface IFuncProps {
   props: TitleType & StatusType;
