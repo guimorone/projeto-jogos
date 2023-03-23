@@ -79,3 +79,20 @@ export function randomNumber(min: number, max: number): number {
 export function randomPercentForTrue(percentage: IntRange<0, 101> = 50): boolean {
   return randomNumber(1, 100) <= percentage;
 }
+
+export function isArraysEqual(a: any[], b: any[]): boolean {
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  if (a.length !== b.length) return false;
+
+  // If you don't care about the order of the elements inside
+  // the array, you should sort both arrays here.
+  // Please note that calling sort on an array will modify that array.
+  // you might want to clone your array first.
+
+  const len = a.length || b.length;
+
+  for (let i = 0; i < len; i++) if (a[i] !== b[i]) return false;
+
+  return true;
+}

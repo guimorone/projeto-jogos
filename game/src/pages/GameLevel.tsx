@@ -1,38 +1,55 @@
-import { useState, useEffect, FC, KeyboardEvent, ChangeEvent, Fragment, ComponentProps } from 'react';
-import { useParams } from 'react-router-dom';
+import {
+  useState,
+  useEffect,
+  FC,
+  KeyboardEvent,
+  ChangeEvent,
+  Fragment,
+  ComponentProps,
+  Dispatch,
+  SetStateAction,
+} from 'react';
 import { Progress } from 'flowbite-react';
 import { useSprings, animated, config, AnimationResult, Controller, SpringValue } from '@react-spring/web';
 import { Transition } from '@headlessui/react';
 import GameStatusComponent from '../components/GameStatus';
-import { classNames, randomNumber, randomPercentForTrue, normalizeValue, uniqueArray } from '../utils';
-import { handleChangeWord } from '../utils/algorithm';
-import { useWindowSize, useGameContext } from '../utils/hooks';
-import {
-  DELAY_TO_START_NEW_LEVEL_MS,
-  AXLE_GAP,
-  POINTS_FOR_DIAGONAL_VALUES,
-  POINTS_FOR_NON_NORMALIZED_VALUES,
-  CANCEL_KEYS,
-} from '../constants';
+import { classNames, randomNumber, randomPercentForTrue, normalizeValue, uniqueArray, isArraysEqual } from '../utils';
+import { handleChangeWord, getPointsGained } from '../utils/algorithm';
+import { useWindowSize } from '../utils/hooks';
+import { DELAY_TO_START_NEW_LEVEL_MS, AXLE_GAP, CANCEL_KEYS } from '../constants';
+import type { GameStatusOptions } from '../@types';
 
-interface IFuncProps {}
+interface IFuncProps {
+  level: number;
+  words: string[];
+  gameStatus: GameStatusOptions;
+  setGameStatus: Dispatch<SetStateAction<GameStatusOptions>>;
+  playerHealth: number;
+  playerMaxHealth: number;
+  setPlayerHealth: Dispatch<SetStateAction<number>>;
+  playerLossHealth: number;
+  maxDiagonalCountWords: number;
+  totalWaves: number;
+  waveDelay: number;
+  countWordsInWave: number;
+  wordsSpeed: number;
+}
 
-const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
-  const { level } = useParams();
-  const {
-    words,
-    gameStatus,
-    setGameStatus,
-    playerHealth,
-    setPlayerHealth,
-    playerMaxHealth,
-    playerLossHealth,
-    totalWaves,
-    waveDelay,
-    countWordsInWave,
-    maxDiagonalCountWords,
-    wordsSpeed,
-  } = useGameContext();
+const GameLevel: FC<IFuncProps> = ({
+  level,
+  words,
+  gameStatus,
+  setGameStatus,
+  playerHealth,
+  setPlayerHealth,
+  playerMaxHealth,
+  playerLossHealth,
+  totalWaves,
+  waveDelay,
+  countWordsInWave,
+  maxDiagonalCountWords,
+  wordsSpeed,
+}: IFuncProps) => {
   const totalWordsInLevel: Readonly<number> = countWordsInWave * totalWaves;
 
   const getNewDisplayedWords = (reset: boolean = true): string[] => {
@@ -62,7 +79,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
 
   const [wordsHitsNames, setWordsHitsNames] = useState<string[]>([]);
   const [wordsMissedNames, setWordsMissedNames] = useState<string[]>([]);
-  const [wordsLeft, setWordsLeft] = useState<number>(countWordsInWave * totalWaves);
+  const [wordsLeft, setWordsLeft] = useState<number>(totalWordsInLevel);
   const [points, setPoints] = useState<number>(0);
   const [totalWordsHitsNames, setTotalWordsHitsNames] = useState<string[]>([]);
   const [totalWordsMissedNames, setTotalWordsMissedNames] = useState<string[]>([]);
@@ -73,11 +90,26 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
   const [wordsSuffixList, setWordsSuffixList] = useState<string[]>([]);
   const [displayedWords, setDisplayedWords] = useState<string[]>(getNewDisplayedWords());
 
+  let newDiagonalIndexes: number[] = [];
+
+  const resetStates = (): void => {
+    newDiagonalIndexes = [];
+    setWordWritten('');
+    setPoints(0);
+    setDisplayedWords([]);
+    setWordsPrefixList([]);
+    setWordsSuffixList([]);
+    setWordsHitsNames([]);
+    setWordsMissedNames([]);
+    setDiagonalIndexes([]);
+    setWordsLeft(totalWordsInLevel);
+  };
+
   const gotIt = (hitIndex: number): void => {
     if (wordsLeft <= 0 || hitIndex < 0 || hitIndex >= displayedWords.length) return;
 
     const wordHit = displayedWords[hitIndex];
-    if (!wordsHitsNames?.includes(wordHit) && !wordsMissedNames?.includes(wordHit)) {
+    if (wordHit && !wordsHitsNames?.includes(wordHit) && !wordsMissedNames?.includes(wordHit)) {
       const normalizedWordHit = normalizeValue(wordHit);
       const isNormalized = wordHit === normalizedWordHit;
       const isDiagonal = diagonalIndexes?.includes(hitIndex);
@@ -85,14 +117,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
       setWordWritten('');
       setWordsHitsNames(prev => [...prev, wordHit]);
       setWordsLeft(prev => prev - 1);
-      setPoints(
-        prev =>
-          prev +
-          (isDiagonal ? POINTS_FOR_DIAGONAL_VALUES : 1) *
-            (isNormalized ? 1 : POINTS_FOR_NON_NORMALIZED_VALUES) *
-            levelParsed *
-            wordHit.length
-      );
+      setPoints(prev => prev + getPointsGained(level, wordHit.length, isDiagonal, isNormalized));
     }
   };
 
@@ -102,56 +127,63 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
     if (wordsLeft <= 0 || missedIndex < 0 || missedIndex >= displayedWords?.length) return;
 
     const missedWord = displayedWords[missedIndex];
-    if (!wordsHitsNames?.includes(missedWord) && !wordsMissedNames?.includes(missedWord)) {
+    if (missedWord && !wordsHitsNames?.includes(missedWord) && !wordsMissedNames?.includes(missedWord)) {
+      setPlayerHealth(prev => prev - playerLossHealth);
       setWordsMissedNames(prev => [...prev, missedWord]);
       setWordsLeft(prev => prev - 1);
-      setPlayerHealth(prev => prev - playerLossHealth);
     }
   };
 
-  /*
-  !: Aparentemente useSprings não ta vendo direito quando tem mudança de estados, ai ele fica dando erro se tentar usar `setDiagonalIndexes` e fica marcando as palavras como perdidas no `onRest`
-  ?: O useSprings tem o terceiro argumento de `deps` assim como o `useEffect`, será que a gente pode usar ele pra resolver esse problema?
-  todo: Investigar isso, acredito que resolvendo isso o jogo tá pronto e faltará apenas pequenos ajustes
-  */
+  // ------------------------------------------------- React Springs -------------------------------------------------
 
-  const onRestEvent = (result: AnimationResult, spring: Controller | SpringValue): void => {
-    if (result.finished) {
-      // @ts-ignore
-      const index: number = spring.springs.index.get(),
-        // @ts-ignore
-        x: number = spring.springs.x.get(),
-        // @ts-ignore
-        y: number = spring.springs.y.get();
+  const onStartEvent = (_result: AnimationResult, _spring: Controller | SpringValue): void => {
+    if (newDiagonalIndexes?.length && !isArraysEqual(newDiagonalIndexes, diagonalIndexes))
+      setDiagonalIndexes(newDiagonalIndexes);
+  };
 
-      if (checkIfOutOfBounds(x, y)) missedIt(index);
-    }
+  const onRestEvent = (result: AnimationResult, _spring: Controller | SpringValue): void => {
+    if (!result || !('value' in result)) return;
+
+    const { x, y, index } = result.value as { x: number; y: number; index: number };
+
+    if (checkIfOutOfBounds(x, y)) missedIt(index);
   };
 
   const springsProps = (index: number): any => {
     let isDiagonal: boolean = false;
-    if (diagonalIndexes?.length < maxDiagonalCountWords && !diagonalIndexes?.includes(index))
+    let updateArray: boolean = false;
+    if (newDiagonalIndexes?.length < maxDiagonalCountWords && !newDiagonalIndexes?.includes(index)) {
       isDiagonal = randomPercentForTrue(40);
+      updateArray = isDiagonal;
+    } else isDiagonal = newDiagonalIndexes?.includes(index);
 
     const wave = Math.floor(index / countWordsInWave);
     const fromX = randomNumber(AXLE_GAP, width - AXLE_GAP);
     const fromY = randomNumber(-2 * AXLE_GAP, -AXLE_GAP);
     let chooseDiagonalX = undefined;
     if (isDiagonal) {
-      // !: setar estado não está funcionando, preciso disso para dar mais ponto para palavras na diagonal
-      setDiagonalIndexes(prev => [...prev, index]);
-      do chooseDiagonalX = randomNumber(AXLE_GAP, width - AXLE_GAP);
-      while (chooseDiagonalX >= fromX - AXLE_GAP && chooseDiagonalX <= fromX + AXLE_GAP);
+      if (updateArray) newDiagonalIndexes.push(index);
+      do chooseDiagonalX = randomNumber(0, width);
+      while (Math.abs(chooseDiagonalX - fromX) < 1.5 * AXLE_GAP);
     }
 
     const from = { x: fromX, y: fromY, index };
     const to = { x: isDiagonal && chooseDiagonalX !== undefined ? chooseDiagonalX : fromX, y: height + 10 };
-    const delay = DELAY_TO_START_NEW_LEVEL_MS + 500 + wave * waveDelay;
+    const delay = DELAY_TO_START_NEW_LEVEL_MS + wave * waveDelay;
 
-    return { from, to, delay, onRest: onRestEvent, config: { ...config.gentle, duration: wordsSpeed } };
+    return {
+      from,
+      to,
+      delay,
+      onStart: onStartEvent,
+      onRest: onRestEvent,
+      config: { ...config.gentle, duration: wordsSpeed },
+    };
   };
 
-  const [springs, springsApi] = useSprings(totalWordsInLevel, springsProps, [level, words]);
+  const [springs, springsApi] = useSprings(totalWordsInLevel, springsProps, [level, width, height, displayedWords]);
+
+  // ------------------------------------------------- React Springs -------------------------------------------------
 
   useEffect(() => {
     switch (gameStatus) {
@@ -170,16 +202,6 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
         break;
     }
   }, [gameStatus]);
-
-  const resetStates = (): void => {
-    setWordsHitsNames([]);
-    setPoints(0);
-    setWordWritten('');
-    setDisplayedWords([]);
-    setWordsPrefixList([]);
-    setWordsSuffixList([]);
-    setDiagonalIndexes([]);
-  };
 
   useEffect(() => {
     if (gameStatus !== 'running' && gameStatus !== 'paused') return;
@@ -202,9 +224,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
     setWordsSuffixList(suffixList);
   }, [wordWritten, displayedWords]);
 
-  const levelParsed: number = Number(level);
-
-  if (!words || !words.length || !level || !levelParsed || Number.isNaN(levelParsed)) return null;
+  if (!words || !words.length || level <= 0) return null;
 
   const handleChangeValue = (e: ChangeEvent<HTMLInputElement>): void => setWordWritten(e.target.value);
 
@@ -272,7 +292,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
           )}
         >
           <div className="inline-flex gap-x-16 items-baseline">
-            <h1 className="text-4xl font-black">Level {levelParsed}</h1>
+            <h1 className="text-4xl font-black">Level {level}</h1>
             <div className="inline-flex gap-x-3">
               <h4 className="text-rose-500 text-xl font-medium">{`${wordsLeft} ${
                 wordsLeft !== 1 ? 'palavras restantes' : 'palavra restante'
@@ -305,7 +325,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
                 className={classNames(
                   wordsHitsNames?.includes(displayedWords[index]) &&
                     'motion-safe:animate-spin transition duration-300 ease-in-out opacity-0 bg-gradient-to-r from-teal-400 to-teal-700',
-                  wordsPrefixList[index] && 'bg-yellow-500 bg-opacity-70',
+                  wordsPrefixList[index] && 'bg-yellow-500 z-50',
                   'absolute p-2 tracking-widest text-xl w-fit rounded-xl shadow-sm'
                 )}
               >
