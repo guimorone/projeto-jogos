@@ -53,7 +53,6 @@ interface IFuncProps {}
 const Game: FC<IFuncProps> = ({}: IFuncProps) => {
   const navigate = useNavigate();
 
-  // game and level states
   const [gameStatus, setGameStatus] = useState<GameStatusOptions>('starting');
   const [level, setLevel] = useState<number>(0);
   const [playerHealth, setPlayerHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
@@ -115,6 +114,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
     if (gameStatus === 'running') setGameStatus('paused');
   };
 
+  // pausa se o jogador não tiver vendo a tela
   useEffect(() => {
     onFocusFunction();
 
@@ -166,7 +166,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
       setGameStatus('newLevel');
       setTimeout(setGameStatus, DELAY_TO_START_NEW_LEVEL_MS, 'running');
       navigate(level.toString());
-    }
+    } else if (gameStatus !== 'starting') setLevel(1);
   }, [level]);
 
   return (
@@ -206,7 +206,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
         ) : gameStatus === 'defeat' || gameStatus === 'gameOver' ? (
           <button
             className="z-50 min-w-fit sm:w-36 p-1 md:px-3 md:py-1.5 flex flex-wrap justify-between bg-yellow-500 bg-opacity-100 hover:bg-opacity-70 rounded-full shadow-sm motion-safe:animate-pulse hover:animate-none"
-            onClick={() => setLevel(1)}
+            onClick={() => setLevel(0)}
           >
             <ArrowPathIcon aria-hidden className="w-5 h-5 sm:w-7 sm:h-7" />
             <span className="font-bold text-sm sm:text-lg">Reiniciar</span>
@@ -222,7 +222,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
             <Spinner color="purple" size="xl" aria-label="Loading words" />
           </div>
         </div>
-      ) : level <= MAX_LEVEL ? (
+      ) : (
         <Outlet
           context={{
             words: sentWordsList,
@@ -239,7 +239,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
             wordsSpeed,
           }}
         />
-      ) : null}
+      )}
     </div>
   );
 };

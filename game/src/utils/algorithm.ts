@@ -52,7 +52,7 @@ export const gameRules = (
   newPlayerHealth: INITIAL_PLAYER_HEALTH - (level - 1),
   newPlayerLossHealth: INITIAL_PLAYER_LOSS_HEALTH + (level - 1),
   minWordsLength: INITIAL_MIN_WORDS_LENGTH + (level - 1),
-  maxWordsLength: INITIAL_MAX_WORDS_LENGTH + 2 + (level - 1),
+  maxWordsLength: INITIAL_MAX_WORDS_LENGTH + (level - 1),
   newMaxDiagonalCountWords: INITIAL_MAX_DIAGONAL_COUNT_WORDS + 2 * (level - 1),
   newTotalWaves: INITIAL_TOTAL_WAVES + 2 * (level - 1),
   newWaveDelay: INITIAL_WAVE_DELAY - 1350 * (level - 1), // ms
