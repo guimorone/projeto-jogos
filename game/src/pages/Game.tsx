@@ -2,14 +2,16 @@ import { useState, useEffect, FC, Dispatch, SetStateAction } from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PlayIcon, PauseIcon, ArrowPathIcon, ForwardIcon } from '@heroicons/react/24/outline';
 import { Spinner } from 'flowbite-react';
-import { asyncReadLocalTxtFile, uniqueArray, shuffleArray } from '../utils';
+import { asyncReadLocalTxtFile, uniqueArray, shuffleArray, removeStrangeStrings } from '../utils';
 import { gameRules } from '../utils/algorithm';
 import {
   MAX_LEVEL,
   DELAY_TO_START_NEW_LEVEL_MS,
   INITIAL_PLAYER_HEALTH,
+  INITIAL_PLAYER_LOSS_HEALTH,
   INITIAL_MIN_WORDS_LENGTH,
   INITIAL_MAX_WORDS_LENGTH,
+  INITIAL_MAX_DIAGONAL_COUNT_WORDS,
   INITIAL_TOTAL_WAVES,
   INITIAL_WAVE_DELAY,
   INITIAL_COUNT_WORDS_IN_WAVE,
@@ -20,16 +22,25 @@ import dicio from '../assets/words/dicio.txt';
 import verbs from '../assets/words/verbs.txt';
 import words from '../assets/words/words.txt';
 
-export type GameStatusOptions = 'starting' | 'paused' | 'running' | 'victory' | 'defeat' | 'gameOver' | 'newLevel';
+export type GameStatusOptions =
+  | 'starting'
+  | 'paused'
+  | 'running'
+  | 'victory'
+  | 'defeat'
+  | 'gameOver'
+  | 'newLevel'
+  | 'levelDone';
 
 export type OutletContextType = {
   words: string[];
   gameStatus: GameStatusOptions;
+  setGameStatus: Dispatch<SetStateAction<GameStatusOptions>>;
   playerHealth: number;
   playerMaxHealth: number;
   setPlayerHealth: Dispatch<SetStateAction<number>>;
-  bossHealth: number;
-  setBossHealth: Dispatch<SetStateAction<number>>;
+  playerLossHealth: number;
+  maxDiagonalCountWords: number;
   bossMaxHealth: number;
   totalWaves: number;
   waveDelay: number;
@@ -42,18 +53,17 @@ interface IFuncProps {}
 const Game: FC<IFuncProps> = ({}: IFuncProps) => {
   const navigate = useNavigate();
 
-  // game and level states
   const [gameStatus, setGameStatus] = useState<GameStatusOptions>('starting');
   const [level, setLevel] = useState<number>(0);
   const [playerHealth, setPlayerHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
   const [playerMaxHealth, setPlayerMaxHealth] = useState<number>(INITIAL_PLAYER_HEALTH);
-  const [bossHealth, setBossHealth] = useState<number>(INITIAL_COUNT_WORDS_IN_WAVE * INITIAL_TOTAL_WAVES);
-  const [bossMaxHealth, setBossMaxHealth] = useState<number>(INITIAL_COUNT_WORDS_IN_WAVE * INITIAL_TOTAL_WAVES);
+  const [playerLossHealth, setPlayerLossHealth] = useState<number>(INITIAL_PLAYER_LOSS_HEALTH);
   const [totalWaves, setTotalWaves] = useState<number>(INITIAL_TOTAL_WAVES);
   const [waveDelay, setWaveDelay] = useState<number>(INITIAL_WAVE_DELAY);
   const [countWordsInWave, setCountWordsInWave] = useState<number>(INITIAL_COUNT_WORDS_IN_WAVE);
   const [wordsMinLength, setWordsMinLength] = useState<number>(INITIAL_MIN_WORDS_LENGTH);
   const [wordsMaxLength, setWordsMaxLength] = useState<number>(INITIAL_MAX_WORDS_LENGTH);
+  const [maxDiagonalCountWords, setMaxDiagonalCountWords] = useState<number>(INITIAL_MAX_DIAGONAL_COUNT_WORDS);
   const [wordsSpeed, setWordsSpeed] = useState<number>(INITIAL_WORDS_SPEED);
   const [wordsList, setWordsList] = useState<string[]>([]);
   const [sentWordsList, setSentWordsList] = useState<string[]>([]);
@@ -69,7 +79,9 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
 
         Promise.all([conjPromise, dicioPromise, verbsPromise, wordsPromise])
           .then(([conjData, dicioData, verbsData, wordsData]) => {
-            const newWordsList = uniqueArray([...conjData, ...dicioData, ...verbsData, ...wordsData]);
+            const newWordsList = removeStrangeStrings(
+              uniqueArray([...conjData, ...dicioData, ...verbsData, ...wordsData])
+            );
 
             setWordsList(newWordsList);
             setSentWordsList(
@@ -80,22 +92,50 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
           })
           .catch(err => console.error(`Error in "load all words" step!\n${err}`))
           .finally(() => setLevel(1));
-
         break;
       case 'victory':
         if (level >= MAX_LEVEL) setGameStatus('gameOver');
+        break;
+      case 'levelDone':
+        if (playerHealth > 0) setGameStatus('victory');
+        else setGameStatus('defeat');
         break;
       default:
         break;
     }
   }, [gameStatus]);
 
+  // listen if application is being viewed
+  const onFocusFunction = () => {
+    if (gameStatus === 'paused') setGameStatus('running');
+  };
+
+  const onBlurFunction = () => {
+    if (gameStatus === 'running') setGameStatus('paused');
+  };
+
+  // pausa se o jogador não tiver vendo a tela
+  useEffect(() => {
+    onFocusFunction();
+
+    window.addEventListener('focus', onFocusFunction);
+    window.addEventListener('blur', onBlurFunction);
+
+    return () => {
+      onBlurFunction();
+
+      window.removeEventListener('focus', onFocusFunction);
+      window.removeEventListener('blur', onBlurFunction);
+    };
+  }, []);
+
   const newLevelRules = (): void => {
     const {
       newPlayerHealth,
-      newBossHealth,
+      newPlayerLossHealth,
       minWordsLength,
       maxWordsLength,
+      newMaxDiagonalCountWords,
       newTotalWaves,
       newWaveDelay,
       newCountWordsInWave,
@@ -104,13 +144,13 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
 
     setPlayerHealth(newPlayerHealth);
     setPlayerMaxHealth(newPlayerHealth);
-    setBossHealth(newBossHealth);
-    setBossMaxHealth(newBossHealth);
+    setPlayerLossHealth(newPlayerLossHealth);
     setTotalWaves(newTotalWaves);
     setWaveDelay(newWaveDelay);
     setCountWordsInWave(newCountWordsInWave);
     setWordsMinLength(minWordsLength);
     setWordsMaxLength(maxWordsLength);
+    setMaxDiagonalCountWords(newMaxDiagonalCountWords);
     setWordsSpeed(newWordsSpeed);
   };
 
@@ -126,13 +166,8 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
       setGameStatus('newLevel');
       setTimeout(setGameStatus, DELAY_TO_START_NEW_LEVEL_MS, 'running');
       navigate(level.toString());
-    }
+    } else if (gameStatus !== 'starting') setLevel(1);
   }, [level]);
-
-  useEffect(() => {
-    if (bossHealth <= 0) setGameStatus('victory');
-    else if (playerHealth <= 0) setGameStatus('defeat');
-  }, [playerHealth, bossHealth]);
 
   return (
     <div className="relative p-1.5 w-full h-full min-h-screen bg-gradient-to-t from-violet-900 to-sky-900">
@@ -162,7 +197,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
           </button>
         ) : gameStatus === 'victory' ? (
           <button
-            className="z-50 min-w-fit sm:w-44 p-1 md:px-3 md:py-1.5 flex flex-wrap justify-between bg-yellow-500 bg-opacity-100 hover:bg-opacity-70 rounded-full shadow-sm motion-safe:animate-bounce hover:animate-none"
+            className="z-50 min-w-fit sm:w-44 p-1 md:px-3 md:py-1.5 flex flex-wrap justify-between bg-yellow-500 bg-opacity-100 hover:bg-opacity-70 rounded-full shadow-sm motion-safe:animate-pulse hover:animate-none"
             onClick={() => setLevel(prev => prev + 1)}
           >
             <ForwardIcon aria-hidden className="w-5 h-5 sm:w-7 sm:h-7" />
@@ -170,8 +205,8 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
           </button>
         ) : gameStatus === 'defeat' || gameStatus === 'gameOver' ? (
           <button
-            className="z-50 min-w-fit sm:w-36 p-1 md:px-3 md:py-1.5 flex flex-wrap justify-between bg-yellow-500 bg-opacity-100 hover:bg-opacity-70 rounded-full shadow-sm motion-safe:animate-bounce hover:animate-none"
-            onClick={() => setLevel(1)}
+            className="z-50 min-w-fit sm:w-36 p-1 md:px-3 md:py-1.5 flex flex-wrap justify-between bg-yellow-500 bg-opacity-100 hover:bg-opacity-70 rounded-full shadow-sm motion-safe:animate-pulse hover:animate-none"
+            onClick={() => setLevel(0)}
           >
             <ArrowPathIcon aria-hidden className="w-5 h-5 sm:w-7 sm:h-7" />
             <span className="font-bold text-sm sm:text-lg">Reiniciar</span>
@@ -187,24 +222,24 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
             <Spinner color="purple" size="xl" aria-label="Loading words" />
           </div>
         </div>
-      ) : level <= MAX_LEVEL ? (
+      ) : (
         <Outlet
           context={{
             words: sentWordsList,
             gameStatus,
+            setGameStatus,
             playerHealth,
             setPlayerHealth,
             playerMaxHealth,
-            bossHealth,
-            setBossHealth,
-            bossMaxHealth,
+            playerLossHealth,
+            maxDiagonalCountWords,
             totalWaves,
             waveDelay,
             countWordsInWave,
             wordsSpeed,
           }}
         />
-      ) : null}
+      )}
     </div>
   );
 };

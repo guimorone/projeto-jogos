@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, memo, FC } from 'react';
 import { Link } from 'react-router-dom';
 import { CodeBracketSquareIcon, QuestionMarkCircleIcon } from '@heroicons/react/24/outline';
 import About from '../components/About';
 import { GAME_NAME, REPO_URL } from '../constants';
 import kirby from '../assets/kirby.png';
 
-export default function Home() {
+interface IFuncProps {}
+
+const Home: FC<IFuncProps> = () => {
   const [showAbout, setShowAbout] = useState<boolean>(false);
 
   return (
@@ -49,4 +51,6 @@ export default function Home() {
       <About show={showAbout} onClose={() => setShowAbout(false)} />
     </div>
   );
-}
+};
+
+export default memo(Home);

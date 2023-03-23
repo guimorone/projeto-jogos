@@ -7,7 +7,7 @@ interface IFuncProps {
 }
 
 // Era pra ser intervalTimerMS = 1000, mas ta tendo algum delay na animação
-const Timer: FC<IFuncProps> = ({ initialSeconds = 0, initialMinute = 0, intervalTimerMS = 920 }: IFuncProps) => {
+const Timer: FC<IFuncProps> = ({ initialSeconds = 0, initialMinute = 0, intervalTimerMS = 930 }: IFuncProps) => {
   const [minutes, setMinutes] = useState<number>(initialMinute);
   const [seconds, setSeconds] = useState<number>(initialSeconds);
 
