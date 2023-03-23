@@ -4,7 +4,7 @@ import { Progress } from 'flowbite-react';
 import { useSprings, animated, config, AnimationResult, Controller, SpringValue } from '@react-spring/web';
 import { Transition } from '@headlessui/react';
 import GameStatusComponent from '../components/GameStatus';
-import { classNames, randomNumber, randomPercentForTrue, normalizeValue, uniqueArray } from '../utils';
+import { classNames, randomNumber, randomPercentForTrue, normalizeValue, uniqueArray, isArraysEqual } from '../utils';
 import { handleChangeWord } from '../utils/algorithm';
 import { useWindowSize, useGameContext } from '../utils/hooks';
 import {
@@ -73,6 +73,17 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
   const [wordsSuffixList, setWordsSuffixList] = useState<string[]>([]);
   const [displayedWords, setDisplayedWords] = useState<string[]>(getNewDisplayedWords());
 
+  const resetStates = (): void => {
+    setWordWritten('');
+    setPoints(0);
+    setDisplayedWords([]);
+    setWordsPrefixList([]);
+    setWordsSuffixList([]);
+    setWordsHitsNames([]);
+    setWordsMissedNames([]);
+    setDiagonalIndexes([]);
+  };
+
   const gotIt = (hitIndex: number): void => {
     if (wordsLeft <= 0 || hitIndex < 0 || hitIndex >= displayedWords.length) return;
 
@@ -103,43 +114,46 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
 
     const missedWord = displayedWords[missedIndex];
     if (!wordsHitsNames?.includes(missedWord) && !wordsMissedNames?.includes(missedWord)) {
+      setPlayerHealth(prev => prev - playerLossHealth);
       setWordsMissedNames(prev => [...prev, missedWord]);
       setWordsLeft(prev => prev - 1);
-      setPlayerHealth(prev => prev - playerLossHealth);
     }
   };
 
-  /*
-  !: Aparentemente useSprings não ta vendo direito quando tem mudança de estados, ai ele fica dando erro se tentar usar `setDiagonalIndexes` e fica marcando as palavras como perdidas no `onRest`
-  ?: O useSprings tem o terceiro argumento de `deps` assim como o `useEffect`, será que a gente pode usar ele pra resolver esse problema?
-  todo: Investigar isso, acredito que resolvendo isso o jogo tá pronto e faltará apenas pequenos ajustes
-  */
+  // ------------------------------------------------- React Springs -------------------------------------------------
 
-  const onRestEvent = (result: AnimationResult, spring: Controller | SpringValue): void => {
-    if (result.finished) {
+  const newDiagonalIndexes: number[] = [];
+
+  const onStartEvent = (_result: AnimationResult, _spring: Controller | SpringValue): void => {
+    if (newDiagonalIndexes?.length && !isArraysEqual(newDiagonalIndexes, diagonalIndexes))
+      setDiagonalIndexes(newDiagonalIndexes);
+  };
+
+  const onRestEvent = (_result: AnimationResult, spring: Controller | SpringValue): void => {
+    // @ts-ignore
+    const index: number = spring.springs.index.get(),
       // @ts-ignore
-      const index: number = spring.springs.index.get(),
-        // @ts-ignore
-        x: number = spring.springs.x.get(),
-        // @ts-ignore
-        y: number = spring.springs.y.get();
+      x: number = spring.springs.x.get(),
+      // @ts-ignore
+      y: number = spring.springs.y.get();
 
-      if (checkIfOutOfBounds(x, y)) missedIt(index);
-    }
+    if (checkIfOutOfBounds(x, y)) missedIt(index);
   };
 
   const springsProps = (index: number): any => {
     let isDiagonal: boolean = false;
-    if (diagonalIndexes?.length < maxDiagonalCountWords && !diagonalIndexes?.includes(index))
+    let updateState: boolean = false;
+    if (newDiagonalIndexes?.length < maxDiagonalCountWords && !newDiagonalIndexes?.includes(index)) {
       isDiagonal = randomPercentForTrue(40);
+      updateState = isDiagonal;
+    } else isDiagonal = newDiagonalIndexes?.includes(index);
 
     const wave = Math.floor(index / countWordsInWave);
     const fromX = randomNumber(AXLE_GAP, width - AXLE_GAP);
     const fromY = randomNumber(-2 * AXLE_GAP, -AXLE_GAP);
     let chooseDiagonalX = undefined;
     if (isDiagonal) {
-      // !: setar estado não está funcionando, preciso disso para dar mais ponto para palavras na diagonal
-      setDiagonalIndexes(prev => [...prev, index]);
+      if (updateState) newDiagonalIndexes.push(index);
       do chooseDiagonalX = randomNumber(AXLE_GAP, width - AXLE_GAP);
       while (chooseDiagonalX >= fromX - AXLE_GAP && chooseDiagonalX <= fromX + AXLE_GAP);
     }
@@ -148,10 +162,19 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
     const to = { x: isDiagonal && chooseDiagonalX !== undefined ? chooseDiagonalX : fromX, y: height + 10 };
     const delay = DELAY_TO_START_NEW_LEVEL_MS + 500 + wave * waveDelay;
 
-    return { from, to, delay, onRest: onRestEvent, config: { ...config.gentle, duration: wordsSpeed } };
+    return {
+      from,
+      to,
+      delay,
+      onStart: onStartEvent,
+      onRest: onRestEvent,
+      config: { ...config.gentle, duration: wordsSpeed },
+    };
   };
 
-  const [springs, springsApi] = useSprings(totalWordsInLevel, springsProps, [level, words]);
+  const [springs, springsApi] = useSprings(totalWordsInLevel, springsProps, [displayedWords]);
+
+  // ------------------------------------------------- React Springs -------------------------------------------------
 
   useEffect(() => {
     switch (gameStatus) {
@@ -170,16 +193,6 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
         break;
     }
   }, [gameStatus]);
-
-  const resetStates = (): void => {
-    setWordsHitsNames([]);
-    setPoints(0);
-    setWordWritten('');
-    setDisplayedWords([]);
-    setWordsPrefixList([]);
-    setWordsSuffixList([]);
-    setDiagonalIndexes([]);
-  };
 
   useEffect(() => {
     if (gameStatus !== 'running' && gameStatus !== 'paused') return;
@@ -305,7 +318,7 @@ const GameLevel: FC<IFuncProps> = ({}: IFuncProps) => {
                 className={classNames(
                   wordsHitsNames?.includes(displayedWords[index]) &&
                     'motion-safe:animate-spin transition duration-300 ease-in-out opacity-0 bg-gradient-to-r from-teal-400 to-teal-700',
-                  wordsPrefixList[index] && 'bg-yellow-500 bg-opacity-70',
+                  wordsPrefixList[index] && 'bg-yellow-500 z-50',
                   'absolute p-2 tracking-widest text-xl w-fit rounded-xl shadow-sm'
                 )}
               >

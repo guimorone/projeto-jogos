@@ -1,7 +1,7 @@
 import { ComponentProps, FC, ReactElement, Fragment } from 'react';
 import { Transition } from '@headlessui/react';
 import type { GameStatusOptions } from '../../pages/Game';
-import Timer from '../Timer';
+import Timer from './Timer';
 import Template from './Template';
 
 export type NewLevelType = { initialSeconds: ComponentProps<typeof Timer>['initialSeconds'] };
