@@ -108,7 +108,7 @@ const GameLevel: FC<IFuncProps> = ({
   };
 
   const gotIt = (hitIndex: number): void => {
-    if (wordsLeft <= 0 || hitIndex < 0 || hitIndex >= displayedWords.length) return;
+    if (wordsLeft <= 0 || hitIndex < 0 || hitIndex >= displayedWords?.length) return;
 
     const wordHit = displayedWords[hitIndex];
     if (wordHit && !wordsHitsNames?.includes(wordHit) && !wordsMissedNames?.includes(wordHit)) {
