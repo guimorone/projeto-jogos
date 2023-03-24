@@ -33,7 +33,7 @@ const Template: FC<IFuncProps> = ({ status, props }: IFuncProps) => {
   const header = headers[status];
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 w-full h-full">
       <h1
         className={classNames(
           header?.title.color,
