@@ -2,7 +2,7 @@ import { useState, useEffect, FC } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeftIcon, PlayIcon, PauseIcon, ArrowPathIcon, ForwardIcon } from '@heroicons/react/24/outline';
 import { Spinner } from 'flowbite-react';
-import GameLevel from './GameLevel';
+import GameLevel from '../components/GameLevel';
 import { asyncReadLocalTxtFile, uniqueArray, shuffleArray, removeStrangeStrings } from '../utils';
 import { gameRules } from '../utils/algorithm';
 import {
