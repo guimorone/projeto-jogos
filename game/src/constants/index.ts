@@ -1,4 +1,5 @@
 import { KeyboardEvent } from 'react';
+import type { PercentageType } from '../@types';
 
 export const GAME_NAME: Readonly<string> = 'Type War';
 export const REPO_URL: Readonly<string> = 'https://github.com/guimorone/projeto-jogos';
@@ -8,7 +9,7 @@ export const INITIAL_PLAYER_HEALTH: Readonly<number> = 20;
 export const INITIAL_PLAYER_LOSS_HEALTH: Readonly<number> = 2;
 export const INITIAL_MIN_WORDS_LENGTH: Readonly<number> = 2;
 export const INITIAL_MAX_WORDS_LENGTH: Readonly<number> = 4;
-export const INITIAL_MAX_DIAGONAL_COUNT_WORDS: Readonly<number> = 1;
+export const INITIAL_DIAGONAL_CHANCE: Readonly<PercentageType> = 20;
 export const INITIAL_TOTAL_WAVES: Readonly<number> = 3;
 export const INITIAL_WAVE_DELAY: Readonly<number> = 10000; // ms
 export const INITIAL_COUNT_WORDS_IN_WAVE: Readonly<number> = 4;

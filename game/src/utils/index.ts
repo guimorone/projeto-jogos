@@ -1,4 +1,4 @@
-import { IntRange } from '../@types';
+import type { PercentageType } from '../@types';
 
 export function formatNumber(
   value: number,
@@ -76,7 +76,7 @@ export function randomNumber(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
-export function randomPercentForTrue(percentage: IntRange<0, 101> = 50): boolean {
+export function randomPercentForTrue(percentage: PercentageType = 50): boolean {
   return randomNumber(1, 100) <= percentage;
 }
 

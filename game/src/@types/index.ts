@@ -7,6 +7,8 @@ export type Enumerate<N extends number, Acc extends number[] = []> = Acc['length
 
 export type IntRange<F extends number, T extends number> = Exclude<Enumerate<T>, Enumerate<F>>;
 
+export type PercentageType = IntRange<0, 101>;
+
 export type GameStatusOptions =
   | 'starting'
   | 'paused'
@@ -38,3 +40,9 @@ export type StatusType = (NewLevelType | undefined) &
   (DefeatType | undefined) &
   (GameOverType | undefined);
 export type LevelDoneType = (VictoryType | undefined) & (DefeatType | undefined) & (GameOverType | undefined);
+
+export type OnLevelDoneEventType = (
+  currentPoints: number,
+  currentWordsHitsNames: string[],
+  currentWordsMissedNames: string[]
+) => void;

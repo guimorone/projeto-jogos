@@ -12,7 +12,7 @@ import {
   INITIAL_PLAYER_LOSS_HEALTH,
   INITIAL_MIN_WORDS_LENGTH,
   INITIAL_MAX_WORDS_LENGTH,
-  INITIAL_MAX_DIAGONAL_COUNT_WORDS,
+  INITIAL_DIAGONAL_CHANCE,
   INITIAL_TOTAL_WAVES,
   INITIAL_WAVE_DELAY,
   INITIAL_COUNT_WORDS_IN_WAVE,
@@ -22,7 +22,7 @@ import conjugations from '../assets/words/conjugations.txt';
 import dicio from '../assets/words/dicio.txt';
 import verbs from '../assets/words/verbs.txt';
 import words from '../assets/words/words.txt';
-import type { GameStatusOptions } from '../@types';
+import type { GameStatusOptions, PercentageType, OnLevelDoneEventType } from '../@types';
 
 interface IFuncProps {}
 
@@ -37,10 +37,25 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
   const [countWordsInWave, setCountWordsInWave] = useState<number>(INITIAL_COUNT_WORDS_IN_WAVE);
   const [wordsMinLength, setWordsMinLength] = useState<number>(INITIAL_MIN_WORDS_LENGTH);
   const [wordsMaxLength, setWordsMaxLength] = useState<number>(INITIAL_MAX_WORDS_LENGTH);
-  const [maxDiagonalCountWords, setMaxDiagonalCountWords] = useState<number>(INITIAL_MAX_DIAGONAL_COUNT_WORDS);
+  const [diagonalChance, setDiagonalChance] = useState<PercentageType>(INITIAL_DIAGONAL_CHANCE);
   const [wordsSpeed, setWordsSpeed] = useState<number>(INITIAL_WORDS_SPEED);
   const [wordsList, setWordsList] = useState<string[]>([]);
   const [sentWordsList, setSentWordsList] = useState<string[]>([]);
+
+  // Estatísticas finais
+  const [totalPoints, setTotalPoints] = useState<number>(0);
+  const [totalWordsHitsNames, setTotalWordsHitsNames] = useState<string[]>([]);
+  const [totalWordsMissedNames, setTotalWordsMissedNames] = useState<string[]>([]);
+
+  const onLevelDone: OnLevelDoneEventType = (
+    currentPoints: number,
+    currentWordsHitsNames: string[],
+    currentWordsMissedNames: string[]
+  ): void => {
+    setTotalPoints(prev => prev + currentPoints);
+    setTotalWordsHitsNames(prev => [...prev, ...currentWordsHitsNames]);
+    setTotalWordsMissedNames(prev => [...prev, ...currentWordsMissedNames]);
+  };
 
   // load all words
   useEffect(() => {
@@ -109,7 +124,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
       newPlayerLossHealth,
       minWordsLength,
       maxWordsLength,
-      newMaxDiagonalCountWords,
+      newDiagonalChance,
       newTotalWaves,
       newWaveDelay,
       newCountWordsInWave,
@@ -124,8 +139,8 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
     setCountWordsInWave(newCountWordsInWave);
     setWordsMinLength(minWordsLength);
     setWordsMaxLength(maxWordsLength);
-    setMaxDiagonalCountWords(newMaxDiagonalCountWords);
     setWordsSpeed(newWordsSpeed);
+    setDiagonalChance(newDiagonalChance);
   };
 
   useEffect(() => {
@@ -197,6 +212,8 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
         </div>
       ) : (
         <GameLevel
+          // quando o atributo `key` muda, o componente reseta
+          key={`gameLevel_${level}`}
           level={level}
           words={sentWordsList}
           gameStatus={gameStatus}
@@ -205,11 +222,15 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
           setPlayerHealth={setPlayerHealth}
           playerMaxHealth={playerMaxHealth}
           playerLossHealth={playerLossHealth}
-          maxDiagonalCountWords={maxDiagonalCountWords}
+          diagonalChance={diagonalChance}
           totalWaves={totalWaves}
           waveDelay={waveDelay}
           countWordsInWave={countWordsInWave}
           wordsSpeed={wordsSpeed}
+          totalPoints={totalPoints}
+          totalWordsHitsNames={totalWordsHitsNames}
+          totalWordsMissedNames={totalWordsMissedNames}
+          onLevelDone={onLevelDone}
         />
       )}
     </div>

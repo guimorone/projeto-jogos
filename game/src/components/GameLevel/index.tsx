@@ -17,7 +17,7 @@ import { classNames, randomNumber, randomPercentForTrue, normalizeValue, uniqueA
 import { handleChangeWord, getPointsGained } from '../../utils/algorithm';
 import { useWindowSize } from '../../utils/hooks';
 import { DELAY_TO_START_NEW_LEVEL_MS, AXLE_GAP, CANCEL_KEYS } from '../../constants';
-import type { GameStatusOptions } from '../../@types';
+import type { GameStatusOptions, PercentageType, OnLevelDoneEventType } from '../../@types';
 
 interface IFuncProps {
   level: number;
@@ -28,11 +28,15 @@ interface IFuncProps {
   playerMaxHealth: number;
   setPlayerHealth: Dispatch<SetStateAction<number>>;
   playerLossHealth: number;
-  maxDiagonalCountWords: number;
   totalWaves: number;
   waveDelay: number;
   countWordsInWave: number;
   wordsSpeed: number;
+  diagonalChance: PercentageType;
+  totalPoints: number;
+  totalWordsHitsNames: string[];
+  totalWordsMissedNames: string[];
+  onLevelDone: OnLevelDoneEventType;
 }
 
 const GameLevel: FC<IFuncProps> = ({
@@ -47,8 +51,12 @@ const GameLevel: FC<IFuncProps> = ({
   totalWaves,
   waveDelay,
   countWordsInWave,
-  maxDiagonalCountWords,
   wordsSpeed,
+  diagonalChance,
+  totalPoints,
+  totalWordsHitsNames,
+  totalWordsMissedNames,
+  onLevelDone,
 }: IFuncProps) => {
   const totalWordsInLevel: Readonly<number> = countWordsInWave * totalWaves;
 
@@ -77,29 +85,26 @@ const GameLevel: FC<IFuncProps> = ({
 
   const { width, height } = useWindowSize();
 
+  const [wordWritten, setWordWritten] = useState<string>('');
+  const [points, setPoints] = useState<number>(0);
   const [wordsHitsNames, setWordsHitsNames] = useState<string[]>([]);
   const [wordsMissedNames, setWordsMissedNames] = useState<string[]>([]);
   const [wordsLeft, setWordsLeft] = useState<number>(totalWordsInLevel);
-  const [points, setPoints] = useState<number>(0);
-  const [totalWordsHitsNames, setTotalWordsHitsNames] = useState<string[]>([]);
-  const [totalWordsMissedNames, setTotalWordsMissedNames] = useState<string[]>([]);
-  const [totalPoints, setTotalPoints] = useState<number>(0);
-  const [diagonalIndexes, setDiagonalIndexes] = useState<number[]>([]);
-  const [wordWritten, setWordWritten] = useState<string>('');
   const [wordsPrefixList, setWordsPrefixList] = useState<string[]>([]);
   const [wordsSuffixList, setWordsSuffixList] = useState<string[]>([]);
   const [displayedWords, setDisplayedWords] = useState<string[]>(getNewDisplayedWords());
+  const [diagonalIndexes, setDiagonalIndexes] = useState<number[]>([]);
 
   const resetStates = (): void => {
     setWordWritten('');
     setPoints(0);
-    setDisplayedWords([]);
-    setWordsPrefixList([]);
-    setWordsSuffixList([]);
     setWordsHitsNames([]);
     setWordsMissedNames([]);
-    setDiagonalIndexes([]);
     setWordsLeft(totalWordsInLevel);
+    setWordsPrefixList([]);
+    setWordsSuffixList([]);
+    setDisplayedWords([]);
+    setDiagonalIndexes([]);
   };
 
   const gotIt = (hitIndex: number): void => {
@@ -144,8 +149,8 @@ const GameLevel: FC<IFuncProps> = ({
   const springsProps = (index: number): any => {
     let isDiagonal: boolean = false;
     let updateState: boolean = false;
-    if (diagonalIndexes?.length < maxDiagonalCountWords && !diagonalIndexes?.includes(index)) {
-      isDiagonal = randomPercentForTrue(40);
+    if (!diagonalIndexes?.includes(index)) {
+      isDiagonal = randomPercentForTrue(diagonalChance);
       updateState = isDiagonal;
     } else isDiagonal = diagonalIndexes?.includes(index);
 
@@ -183,9 +188,7 @@ const GameLevel: FC<IFuncProps> = ({
         springsApi.pause();
         break;
       case 'levelDone':
-        setTotalWordsHitsNames(prev => [...prev, ...wordsHitsNames]);
-        setTotalWordsMissedNames(prev => [...prev, ...wordsMissedNames]);
-        setTotalPoints(prev => prev + points);
+        onLevelDone(points, wordsHitsNames, wordsMissedNames);
         break;
       default:
         break;
@@ -310,7 +313,7 @@ const GameLevel: FC<IFuncProps> = ({
                   wordsHitsNames?.includes(displayedWords[index]) &&
                     'motion-safe:animate-spin transition duration-300 ease-in-out opacity-0 bg-gradient-to-r from-teal-400 to-teal-700',
                   wordsPrefixList[index] && 'bg-yellow-500 z-50',
-                  'absolute p-2 tracking-widest text-xl w-fit rounded-xl shadow-sm'
+                  'absolute p-2 tracking-widest text-xl w-fit rounded-xl shadow-sm border-none'
                 )}
               >
                 <span className="text-teal-600">{wordsPrefixList[index]}</span>
