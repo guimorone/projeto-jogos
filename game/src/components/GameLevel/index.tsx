@@ -92,7 +92,7 @@ const GameLevel: FC<IFuncProps> = ({
   const [wordsLeft, setWordsLeft] = useState<number>(totalWordsInLevel);
   const [wordsPrefixList, setWordsPrefixList] = useState<string[]>([]);
   const [wordsSuffixList, setWordsSuffixList] = useState<string[]>([]);
-  const [displayedWords, setDisplayedWords] = useState<string[]>(getNewDisplayedWords());
+  const [displayedWords, setDisplayedWords] = useState<string[]>([]);
   const [diagonalIndexes, setDiagonalIndexes] = useState<number[]>([]);
 
   const resetStates = (): void => {
@@ -105,22 +105,6 @@ const GameLevel: FC<IFuncProps> = ({
     setWordsSuffixList([]);
     setDisplayedWords([]);
     setDiagonalIndexes([]);
-  };
-
-  const gotIt = (hitIndex: number): void => {
-    if (wordsLeft <= 0 || hitIndex < 0 || hitIndex >= displayedWords.length) return;
-
-    const wordHit = displayedWords[hitIndex];
-    if (wordHit && !wordsHitsNames?.includes(wordHit) && !wordsMissedNames?.includes(wordHit)) {
-      const normalizedWordHit = normalizeValue(wordHit);
-      const isNormalized = wordHit === normalizedWordHit;
-      const isDiagonal = diagonalIndexes?.includes(hitIndex);
-
-      setWordWritten('');
-      setWordsHitsNames(prev => [...prev, wordHit]);
-      setWordsLeft(prev => prev - 1);
-      setPoints(prev => prev + getPointsGained(level, wordHit.length, isDiagonal, isNormalized));
-    }
   };
 
   const checkIfOutOfBounds = (x: number, y: number): boolean => y > height || ((x < 0 || x > width) && y > AXLE_GAP);
@@ -139,14 +123,14 @@ const GameLevel: FC<IFuncProps> = ({
   // ------------------------------------------------- React Springs -------------------------------------------------
 
   const onRestEvent = (result: AnimationResult, _spring: Controller | SpringValue): void => {
-    if (!result || !('value' in result)) return;
+    if (!result || !('value' in result) || result.cancelled || !result.finished) return;
 
     const { x, y, index } = result.value as { x: number; y: number; index: number };
 
     if (checkIfOutOfBounds(x, y)) missedIt(index);
   };
 
-  const springsProps = (index: number): any => {
+  const springsProps = (index: number, _ctrl: Controller): any => {
     let isDiagonal: boolean = false;
     let updateState: boolean = false;
     if (!diagonalIndexes?.includes(index)) {
@@ -170,10 +154,27 @@ const GameLevel: FC<IFuncProps> = ({
 
     return { from, to, delay, onRest: onRestEvent, config: { ...config.gentle, duration: wordsSpeed } };
   };
-
   const [springs, springsApi] = useSprings(totalWordsInLevel, springsProps, [diagonalIndexes]);
 
   // ------------------------------------------------- React Springs -------------------------------------------------
+
+  const gotIt = (hitIndex: number): void => {
+    if (wordsLeft <= 0 || hitIndex < 0 || hitIndex >= displayedWords?.length) return;
+
+    const wordHit = displayedWords[hitIndex];
+    if (wordHit && !wordsHitsNames?.includes(wordHit) && !wordsMissedNames?.includes(wordHit)) {
+      const normalizedWordHit = normalizeValue(wordHit);
+      const isNormalized = wordHit === normalizedWordHit;
+      const isDiagonal = diagonalIndexes?.includes(hitIndex);
+
+      springsApi?.current[hitIndex].stop(true);
+
+      setWordWritten('');
+      setWordsHitsNames(prev => [...prev, wordHit]);
+      setWordsLeft(prev => prev - 1);
+      setPoints(prev => prev + getPointsGained(level, wordHit.length, isDiagonal, isNormalized));
+    }
+  };
 
   useEffect(() => {
     switch (gameStatus) {

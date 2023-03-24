@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useState, useEffect, RefObject } from 'react';
 import { getWindowDimensions } from '.';
+import { AXLE_GAP } from '../constants';
 
 export function useWindowSize(): { width: number; height: number } {
   // Initialize state with undefined width/height so server and client renders match
@@ -22,4 +22,23 @@ export function useWindowSize(): { width: number; height: number } {
   }, []); // Empty array ensures that effect is only run on mount
 
   return windowSize;
+}
+
+export function useIntersection(element: RefObject<HTMLElement>, rootMargin: string = `${AXLE_GAP}px`) {
+  const [isVisible, setState] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setState(entry.isIntersecting);
+      },
+      { rootMargin }
+    );
+
+    element && observer.observe(element.current as HTMLElement);
+
+    return () => observer.unobserve(element.current as HTMLElement);
+  }, []);
+
+  return isVisible;
 }
