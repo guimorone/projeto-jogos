@@ -11,12 +11,12 @@ const Home: FC<IFuncProps> = () => {
   const [showAbout, setShowAbout] = useState<boolean>(false);
 
   return (
-    <div className="flex flex-col items-center justify-center gap-10 lg:flex-none lg:relative w-screen h-screen min-w-full min-h-full bg-no-repeat bg-keyboard-bg bg-cover bg-clip-border text-center">
+    <div className="flex flex-col items-center justify-center gap-10 lg:flex-none relative w-screen h-screen min-w-full min-h-full bg-no-repeat bg-keyboard-bg bg-cover bg-clip-border text-center">
       <div className="flex flex-1 flex-col gap-0.5 sm:gap-1 pt-3">
         <h1 className="text-2xl sm:text-4xl text-sky-100 font-light">Bem-vindo</h1>
         <h2 className="text-xl sm:text-3xl text-sky-300 font-thin">{GAME_NAME}</h2>
       </div>
-      <div className="lg:absolute lg:top-1/2 lg:left-1/2 lg:-translate-x-1/2 lg:-translate-y-1/2">
+      <div className="absolute top-[63%] lg:top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
         <div className="flex flex-col gap-3 w-60 sm:w-96 text-right text-xl sm:text-3xl font-medium">
           <Link
             to="/game"
