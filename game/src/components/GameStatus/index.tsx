@@ -37,7 +37,7 @@ const GameStatusComponent: FC<IFuncProps> = ({ props }: IFuncProps) => {
       leaveFrom="opacity-100"
       leaveTo="opacity-0"
     >
-      <div className="overflow-auto fixed p-0 -my-2.5 -mx-1.5 top-0 left-0 flex flex-col items-center justify-center w-full h-full min-w-[100vw] min-h-screen z-50 bg-zinc-700 bg-opacity-60 text-center">
+      <div className="overflow-auto fixed p-0 -my-2.5 -mx-1.5 top-0 left-0 flex flex-col items-center justify-center w-full h-full min-w-[100vw] max-w-[100vw] min-h-screen max-h-screen  z-50 bg-zinc-700 bg-opacity-60 text-center">
         {components[props.status]}
       </div>
     </Transition>

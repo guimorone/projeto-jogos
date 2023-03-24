@@ -1,6 +1,7 @@
 import {
   useState,
   useEffect,
+  useRef,
   FC,
   KeyboardEvent,
   ChangeEvent,
@@ -84,6 +85,7 @@ const GameLevel: FC<IFuncProps> = ({
   };
 
   const { width, height } = useWindowSize();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const [wordWritten, setWordWritten] = useState<string>('');
   const [points, setPoints] = useState<number>(0);
@@ -184,6 +186,7 @@ const GameLevel: FC<IFuncProps> = ({
         break;
       case 'running':
         springsApi.resume();
+        if (inputRef?.current) inputRef.current.focus();
         break;
       case 'paused':
         springsApi.pause();
@@ -324,6 +327,7 @@ const GameLevel: FC<IFuncProps> = ({
           </main>
         )}
         <input
+          ref={inputRef}
           type="text"
           disabled={gameStatus !== 'running'}
           className={classNames(
