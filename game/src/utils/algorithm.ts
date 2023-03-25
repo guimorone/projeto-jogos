@@ -28,11 +28,11 @@ export const handleChangeWord = (
     const wordCurrent: string = normalizeWord ? normalizeValue(w) : w;
 
     if (wordCurrent.substring(0, word.length) === word) {
-      prefixList.push(word);
-      suffixList.push(wordCurrent.substring(word.length, wordCurrent.length));
+      prefixList.push(wordWritten);
+      suffixList.push(w.substring(wordWritten.length, w.length));
     } else {
       prefixList.push('');
-      suffixList.push(wordCurrent);
+      suffixList.push(w);
     }
   });
 

@@ -192,6 +192,7 @@ const GameLevel: FC<IFuncProps> = ({
         springsApi.pause();
         break;
       case 'levelDone':
+        springsApi.stop(true);
         onLevelDone(points, wordsHitsNames, wordsMissedNames);
         break;
       default:

@@ -1,5 +1,6 @@
 import { KeyboardEvent } from 'react';
 import type { PercentageType } from '../@types';
+import type { ConfigType } from '../@types/settings';
 
 export const GAME_NAME: Readonly<string> = 'Type War';
 export const REPO_URL: Readonly<string> = 'https://github.com/guimorone/projeto-jogos';
@@ -18,3 +19,6 @@ export const AXLE_GAP: Readonly<number> = 175;
 export const POINTS_FOR_DIAGONAL_VALUES: Readonly<number> = 3;
 export const POINTS_FOR_NON_NORMALIZED_VALUES: Readonly<number> = 2;
 export const CANCEL_KEYS: Readonly<KeyboardEvent<HTMLInputElement>['key'][]> = ['Enter', 'Escape'];
+export const INITIAL_VOLUME: Readonly<ConfigType['volume']> = { music: 50, soundEffects: 50 };
+export const INITIAL_DIAGONAL_WORDS_BOOL: Readonly<ConfigType['diagonalWords']> = true;
+export const INITIAL_CONSIDER_NON_NORMALIZED_WORDS: Readonly<ConfigType['considerNonNormalizedWords']> = true;
