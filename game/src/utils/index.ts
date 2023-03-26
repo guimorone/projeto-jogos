@@ -1,3 +1,4 @@
+import { INITIAL_VOLUME, INITIAL_DIAGONAL_WORDS_BOOL, INITIAL_CONSIDER_NON_NORMALIZED_WORDS } from '../constants';
 import type { PercentageType } from '../@types';
 
 export function formatNumber(
@@ -99,4 +100,19 @@ export function isArraysEqual(a: any[], b: any[]): boolean {
 
 export function isObjEmpty(obj: Object): boolean {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
+}
+
+export function getLocalStorageItem(key: string): any {
+  const hasInitialValues: { [key: string]: any } = {
+    volume: INITIAL_VOLUME,
+    diagonalWords: INITIAL_DIAGONAL_WORDS_BOOL,
+    considerNonNormalizedWords: INITIAL_CONSIDER_NON_NORMALIZED_WORDS,
+  };
+
+  const value: string | null = localStorage.getItem(key);
+
+  return value ? JSON.parse(value) : value !== null && value in hasInitialValues ? hasInitialValues[value] : '';
+}
+export function setLocalStorageItem(key: string, value: any): void {
+  localStorage.setItem(key, JSON.stringify(value));
 }

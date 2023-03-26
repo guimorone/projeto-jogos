@@ -14,11 +14,19 @@ import { Progress } from 'flowbite-react';
 import { useSprings, animated, config, AnimationResult, Controller, SpringValue } from '@react-spring/web';
 import { Transition } from '@headlessui/react';
 import GameStatusComponent from '../GameStatus';
-import { classNames, randomNumber, randomPercentForTrue, normalizeValue, uniqueArray } from '../../utils';
+import {
+  classNames,
+  randomNumber,
+  randomPercentForTrue,
+  normalizeValue,
+  uniqueArray,
+  getLocalStorageItem,
+} from '../../utils';
 import { handleChangeWord, getPointsGained } from '../../utils/algorithm';
 import { useWindowSize } from '../../utils/hooks';
 import { DELAY_TO_START_NEW_LEVEL_MS, AXLE_GAP, CANCEL_KEYS } from '../../constants';
 import type { GameStatusOptions, PercentageType, OnLevelDoneEventType } from '../../@types';
+import type { ConfigType } from '../../@types/settings';
 
 interface IFuncProps {
   level: number;
@@ -61,6 +69,9 @@ const GameLevel: FC<IFuncProps> = ({
 }: IFuncProps) => {
   const totalWordsInLevel: Readonly<number> = countWordsInWave * totalWaves;
 
+  const considerNonNormalizedWords: ConfigType['considerNonNormalizedWords'] =
+    getLocalStorageItem('considerNonNormalizedWords');
+
   const getNewDisplayedWords = (reset: boolean = true): string[] => {
     const newDisplayedWords: string[] = reset ? [] : [...displayedWords];
 
@@ -77,7 +88,7 @@ const GameLevel: FC<IFuncProps> = ({
 
   const updateWordsArrays = (): void => {
     const newDisplayedWords = getNewDisplayedWords();
-    const { prefixList, suffixList } = handleChangeWord(wordWritten, newDisplayedWords);
+    const { prefixList, suffixList } = handleChangeWord(wordWritten, newDisplayedWords, !considerNonNormalizedWords);
 
     setDisplayedWords(newDisplayedWords);
     setWordsPrefixList(prefixList);
@@ -207,10 +218,12 @@ const GameLevel: FC<IFuncProps> = ({
   }, [playerHealth, wordsLeft, gameStatus]);
 
   useEffect(() => {
-    const hitIndex = displayedWords.indexOf(wordWritten);
+    const hitIndex = displayedWords
+      .map(dw => (!considerNonNormalizedWords ? normalizeValue(dw) : dw))
+      .indexOf(!considerNonNormalizedWords ? normalizeValue(wordWritten) : wordWritten);
     if (hitIndex > -1) gotIt(hitIndex);
 
-    const { prefixList, suffixList } = handleChangeWord(wordWritten, displayedWords);
+    const { prefixList, suffixList } = handleChangeWord(wordWritten, displayedWords, !considerNonNormalizedWords);
 
     setWordsPrefixList(prefixList);
     setWordsSuffixList(suffixList);

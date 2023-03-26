@@ -3,29 +3,18 @@ import { Link } from 'react-router-dom';
 import { CodeBracketSquareIcon, QuestionMarkCircleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import About from '../components/About';
 import Settings from '../components/Settings';
-import {
-  GAME_NAME,
-  REPO_URL,
-  INITIAL_VOLUME,
-  INITIAL_DIAGONAL_WORDS_BOOL,
-  INITIAL_CONSIDER_NON_NORMALIZED_WORDS,
-} from '../constants';
+import { getLocalStorageItem, setLocalStorageItem } from '../utils';
+import { GAME_NAME, REPO_URL } from '../constants';
 import kirby from '../assets/kirby.png';
 import type { ConfigType } from '../@types/settings';
 
 interface IFuncProps {}
 
 const Home: FC<IFuncProps> = ({}: IFuncProps) => {
-  const volumeInitialState: ConfigType['volume'] =
-    localStorage.getItem('volume') !== null ? JSON.parse(localStorage.getItem('volume') as string) : INITIAL_VOLUME;
-  const diagonalWordsInitialState: ConfigType['diagonalWords'] =
-    localStorage.getItem('diagonalWords') !== null
-      ? JSON.parse(localStorage.getItem('diagonalWords') as string)
-      : INITIAL_DIAGONAL_WORDS_BOOL;
+  const volumeInitialState: ConfigType['volume'] = getLocalStorageItem('volume');
+  const diagonalWordsInitialState: ConfigType['diagonalWords'] = getLocalStorageItem('diagonalWords');
   const considerNonNormalizedWordsInitialState: ConfigType['considerNonNormalizedWords'] =
-    localStorage.getItem('considerNonNormalizedWords') !== null
-      ? JSON.parse(localStorage.getItem('considerNonNormalizedWords') as string)
-      : INITIAL_CONSIDER_NON_NORMALIZED_WORDS;
+    getLocalStorageItem('considerNonNormalizedWords');
 
   const [volume, setVolume] = useState<ConfigType['volume']>(volumeInitialState);
   const [diagonalWords, setDiagonalWords] = useState<ConfigType['diagonalWords']>(diagonalWordsInitialState);
@@ -34,15 +23,15 @@ const Home: FC<IFuncProps> = ({}: IFuncProps) => {
   >(considerNonNormalizedWordsInitialState);
 
   useEffect(() => {
-    localStorage.setItem('volume', JSON.stringify(volume));
+    setLocalStorageItem('volume', volume);
   }, [volume]);
 
   useEffect(() => {
-    localStorage.setItem('diagonalWords', diagonalWords.toString());
+    setLocalStorageItem('diagonalWords', diagonalWords);
   }, [diagonalWords]);
 
   useEffect(() => {
-    localStorage.setItem('considerNonNormalizedWords', considerNonNormalizedWords.toString());
+    setLocalStorageItem('considerNonNormalizedWords', considerNonNormalizedWords);
   }, [considerNonNormalizedWords]);
 
   const [showAbout, setShowAbout] = useState<boolean>(false);
