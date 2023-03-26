@@ -1,5 +1,6 @@
 import { useState, useEffect, FC, Dispatch, SetStateAction } from 'react';
-import { Modal } from 'flowbite-react';
+import { Modal, Tooltip } from 'flowbite-react';
+import { InformationCircleIcon } from '@heroicons/react/24/outline';
 import ToggleComponent from '../utils/ToggleComponent';
 import type { PercentageType } from '../../@types';
 import type { ConfigType } from '../../@types/settings';
@@ -88,7 +89,21 @@ const Settings: FC<IFuncProps> = ({ show, onClose, volume, diagonalWords, consid
                 <ToggleComponent checked={diagonalWords.value} onChange={diagonalWords.setValue} />
               </div>
               <div className="space-y-1">
-                <p>Considerar acentuação</p>
+                <div className="inline-flex items-center gap-x-1">
+                  <p>Considerar sinais diacríticos</p>
+                  <Tooltip
+                    content="Os sinais diacríticos do português são a cedilha (ç), os acentos gráficos (agudo e circunflexo), o til e, até pouco tempo atrás, o hoje extinto trema"
+                    trigger="hover"
+                    placement="auto"
+                    className="w-2/3"
+                  >
+                    <InformationCircleIcon
+                      aria-hidden={true}
+                      className="w-6 h-6 text-fuchsia-600 bg- hover:cursor-pointer hover:opacity-70"
+                    />
+                  </Tooltip>
+                </div>
+
                 <ToggleComponent
                   checked={considerNonNormalizedWords.value}
                   onChange={considerNonNormalizedWords.setValue}

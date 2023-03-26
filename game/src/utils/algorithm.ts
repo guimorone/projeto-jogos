@@ -28,7 +28,7 @@ export const handleChangeWord = (
     const wordCurrent: string = normalizeWord ? normalizeValue(w) : w;
 
     if (wordCurrent.substring(0, word.length) === word) {
-      prefixList.push(wordWritten);
+      prefixList.push(w.substring(0, wordWritten.length));
       suffixList.push(w.substring(wordWritten.length, w.length));
     } else {
       prefixList.push('');

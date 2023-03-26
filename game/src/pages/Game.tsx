@@ -3,12 +3,9 @@ import { Link } from 'react-router-dom';
 import { ArrowLeftIcon, PlayIcon, PauseIcon, ArrowPathIcon, ForwardIcon } from '@heroicons/react/24/outline';
 import { Spinner } from 'flowbite-react';
 import GameLevel from '../components/GameLevel';
-import { asyncReadLocalTxtFile, uniqueArray, shuffleArray, removeStrangeStrings } from '../utils';
+import { asyncReadLocalTxtFile, uniqueArray, shuffleArray, removeStrangeStrings, getLocalStorageItem } from '../utils';
 import { gameRules } from '../utils/algorithm';
 import {
-  INITIAL_VOLUME,
-  INITIAL_DIAGONAL_WORDS_BOOL,
-  INITIAL_CONSIDER_NON_NORMALIZED_WORDS,
   MAX_LEVEL,
   DELAY_TO_START_NEW_LEVEL_MS,
   INITIAL_PLAYER_HEALTH,
@@ -31,16 +28,7 @@ import type { ConfigType } from '../@types/settings';
 interface IFuncProps {}
 
 const Game: FC<IFuncProps> = ({}: IFuncProps) => {
-  const volume: ConfigType['volume'] =
-    localStorage.getItem('volume') !== null ? JSON.parse(localStorage.getItem('volume') as string) : INITIAL_VOLUME;
-  const diagonalWords: ConfigType['diagonalWords'] =
-    localStorage.getItem('diagonalWords') !== null
-      ? JSON.parse(localStorage.getItem('diagonalWords') as string)
-      : INITIAL_DIAGONAL_WORDS_BOOL;
-  const considerNonNormalizedWords: ConfigType['considerNonNormalizedWords'] =
-    localStorage.getItem('considerNonNormalizedWords') !== null
-      ? JSON.parse(localStorage.getItem('considerNonNormalizedWords') as string)
-      : INITIAL_CONSIDER_NON_NORMALIZED_WORDS;
+  const diagonalWords: ConfigType['diagonalWords'] = getLocalStorageItem('diagonalWords');
 
   const [gameStatus, setGameStatus] = useState<GameStatusOptions>('starting');
   const [level, setLevel] = useState<number>(0);
