@@ -111,7 +111,7 @@ export function getLocalStorageItem(key: string): any {
 
   const value: string | null = localStorage.getItem(key);
 
-  return value ? JSON.parse(value) : value !== null && value in hasInitialValues ? hasInitialValues[value] : '';
+  return value ? JSON.parse(value) : key in hasInitialValues ? hasInitialValues[key] : '';
 }
 export function setLocalStorageItem(key: string, value: any): void {
   localStorage.setItem(key, JSON.stringify(value));
