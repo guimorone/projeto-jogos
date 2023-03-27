@@ -1,6 +1,8 @@
 import { useState, useEffect, RefObject } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getWindowDimensions } from '.';
 import { AXLE_GAP } from '../constants';
+import type { PercentageType } from './../@types/index';
 
 export function useWindowSize(): { width: number; height: number } {
   // Initialize state with undefined width/height so server and client renders match
@@ -41,4 +43,58 @@ export function useIntersection(element: RefObject<HTMLElement>, rootMargin: str
   }, []);
 
   return isVisible;
+}
+
+export const useLocationChange = (action: VoidFunction): void => {
+  const location = useLocation();
+
+  useEffect(() => {
+    action();
+  }, [location]);
+};
+
+export function useAudio(
+  url: string,
+  volume: PercentageType = 100,
+  loop: boolean = false,
+  id: HTMLElement['id'] = '',
+  removeSoundInLocationChange: boolean = true
+): [boolean, (state: 'play' | 'pause' | 'stop' | 'remove') => void] {
+  const [audio] = useState<HTMLAudioElement>(new Audio(url));
+  const [playing, setPlaying] = useState<boolean>(false);
+  audio.volume = volume / 100;
+  audio.loop = loop && playing;
+  if (id) audio.id = id;
+
+  useLocationChange(() => {
+    if (removeSoundInLocationChange) audio.srcObject = null;
+  });
+
+  const setAudioState = (state: 'play' | 'pause' | 'stop' | 'remove') => {
+    setPlaying(state === 'play');
+    if (state === 'stop') audio.currentTime = 0;
+    if (state === 'remove') audio.srcObject = null;
+  };
+
+  useEffect(() => {
+    playing
+      ? audio.play().catch(e => {
+          alert(
+            'Você deve interagir com a página para poder reproduzir sons (medida de privacidade do navagedor)\nErro explicado em termos técnicos:\n' +
+              e
+          );
+        })
+      : audio.pause();
+  }, [playing]);
+
+  useEffect(() => {
+    function endedCallback() {
+      if (!audio.loop) setPlaying(false);
+    }
+
+    audio.addEventListener('ended', endedCallback);
+    return () => audio.removeEventListener('ended', endedCallback);
+  }, []);
+
+  return [playing, setAudioState];
 }

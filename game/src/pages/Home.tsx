@@ -4,9 +4,13 @@ import { CodeBracketSquareIcon, QuestionMarkCircleIcon, Cog6ToothIcon } from '@h
 import About from '../components/About';
 import Settings from '../components/Settings';
 import { getLocalStorageItem, setLocalStorageItem } from '../utils';
+import { useAudio } from '../utils/hooks';
 import { GAME_NAME, REPO_URL } from '../constants';
 import kirby from '../assets/kirby.png';
 import type { ConfigType } from '../@types/settings';
+
+// sounds
+import homeMusic from '../assets/sounds/background-home-music.mp3';
 
 interface IFuncProps {}
 
@@ -21,6 +25,13 @@ const Home: FC<IFuncProps> = ({}: IFuncProps) => {
   const [considerNonNormalizedWords, setConsiderNonNormalizedWords] = useState<
     ConfigType['considerNonNormalizedWords']
   >(considerNonNormalizedWordsInitialState);
+
+  // sounds
+  const [homeMusicIsPlaying, setHomeMusicState] = useAudio(homeMusic, volume.music, true);
+
+  useEffect(() => {
+    if (!homeMusicIsPlaying) setHomeMusicState('play');
+  }, []);
 
   useEffect(() => {
     setLocalStorageItem('volume', volume);
@@ -50,6 +61,7 @@ const Home: FC<IFuncProps> = ({}: IFuncProps) => {
         <div className="flex flex-col gap-3 w-60 sm:w-96 text-right text-xl sm:text-3xl font-medium">
           <Link
             to="/game"
+            onClick={() => setHomeMusicState('remove')}
             className="motion-safe:animate-bounce hover:animate-none flex flex-wrap justify-between items-center bg-sky-900 bg-opacity-70 hover:bg-opacity-100 hover:cursor-pointer shadow-2xl rounded-lg p-3 md:p-5"
           >
             <img src={kirby} className="w-10 h-10 sm:w-20 sm:h-20" />
