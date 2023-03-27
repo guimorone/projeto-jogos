@@ -92,7 +92,11 @@ const GameLevel: FC<IFuncProps> = ({
 
   const updateWordsArrays = (): void => {
     const newDisplayedWords = getNewDisplayedWords();
-    const { prefixList, suffixList } = handleChangeWord(wordWritten, newDisplayedWords, !considerNonNormalizedWords);
+    const { prefixList, suffixList } = handleChangeWord(
+      wordWritten.toLowerCase(),
+      newDisplayedWords,
+      !considerNonNormalizedWords
+    );
 
     setDisplayedWords(newDisplayedWords);
     setWordsPrefixList(prefixList);
@@ -226,12 +230,13 @@ const GameLevel: FC<IFuncProps> = ({
   }, [playerHealth, wordsLeft, gameStatus]);
 
   useEffect(() => {
+    const lowerWordWritten = wordWritten.toLowerCase();
     const hitIndex = displayedWords
       .map(dw => (!considerNonNormalizedWords ? normalizeValue(dw) : dw))
-      .indexOf(!considerNonNormalizedWords ? normalizeValue(wordWritten) : wordWritten);
+      .indexOf(!considerNonNormalizedWords ? normalizeValue(wordWritten) : lowerWordWritten);
     if (hitIndex > -1) gotIt(hitIndex);
 
-    const { prefixList, suffixList } = handleChangeWord(wordWritten, displayedWords, !considerNonNormalizedWords);
+    const { prefixList, suffixList } = handleChangeWord(lowerWordWritten, displayedWords, !considerNonNormalizedWords);
 
     setWordsPrefixList(prefixList);
     setWordsSuffixList(suffixList);
