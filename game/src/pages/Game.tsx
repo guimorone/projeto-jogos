@@ -4,6 +4,7 @@ import { ArrowLeftIcon, PlayIcon, PauseIcon, ArrowPathIcon, ForwardIcon } from '
 import { Spinner } from 'flowbite-react';
 import GameLevel from '../components/GameLevel';
 import { asyncReadLocalTxtFile, uniqueArray, shuffleArray, removeStrangeStrings, getLocalStorageItem } from '../utils';
+import { useAudio } from '../utils/hooks';
 import { gameRules } from '../utils/algorithm';
 import {
   MAX_LEVEL,
@@ -18,17 +19,32 @@ import {
   INITIAL_COUNT_WORDS_IN_WAVE,
   INITIAL_WORDS_SPEED,
 } from '../constants';
+import type { GameStatusOptions, PercentageType, OnLevelDoneEventType } from '../@types';
+import type { ConfigType } from '../@types/settings';
+
+// words
 import conjugations from '../assets/words/conjugations.txt';
 import dicio from '../assets/words/dicio.txt';
 import verbs from '../assets/words/verbs.txt';
 import words from '../assets/words/words.txt';
-import type { GameStatusOptions, PercentageType, OnLevelDoneEventType } from '../@types';
-import type { ConfigType } from '../@types/settings';
+
+// sounds
+import gameMusic from '../assets/sounds/game-level-music.mp3';
+import victorySound from '../assets/sounds/victory.mp3';
+import defeatedSound from '../assets/sounds/defeat.mp3';
+import gameoverSound from '../assets/sounds/gameover.mp3';
 
 interface IFuncProps {}
 
 const Game: FC<IFuncProps> = ({}: IFuncProps) => {
+  const volume: ConfigType['volume'] = getLocalStorageItem('volume');
   const diagonalWords: ConfigType['diagonalWords'] = getLocalStorageItem('diagonalWords');
+
+  // sounds
+  const [gameMusicIsPlaying, setGameMusicAudio] = useAudio(gameMusic, volume.music, true);
+  const [victorySoundIsPlaying, setVictoryAudio] = useAudio(victorySound, volume.soundEffects);
+  const [defeatedSoundIsPlaying, setDefeatedAudio] = useAudio(defeatedSound, volume.soundEffects);
+  const [gameoverSoundIsPlaying, setGameoverAudio] = useAudio(gameoverSound, volume.soundEffects);
 
   const [gameStatus, setGameStatus] = useState<GameStatusOptions>('starting');
   const [level, setLevel] = useState<number>(0);
@@ -86,11 +102,25 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
           .finally(() => setLevel(1));
         break;
       case 'victory':
+        if (!victorySoundIsPlaying) setVictoryAudio('play');
         if (level >= MAX_LEVEL) setGameStatus('gameOver');
         break;
+      case 'defeat':
+        if (!defeatedSoundIsPlaying) setDefeatedAudio('play');
+        break;
+      case 'gameOver':
+        if (!gameoverSoundIsPlaying) setGameoverAudio('play');
+        break;
       case 'levelDone':
+        if (gameMusicIsPlaying) setGameMusicAudio('stop');
         if (playerHealth > 0) setGameStatus('victory');
         else setGameStatus('defeat');
+        break;
+      case 'running':
+        if (!gameMusicIsPlaying) setGameMusicAudio('play');
+        break;
+      case 'paused':
+        if (gameMusicIsPlaying) setGameMusicAudio('pause');
         break;
       default:
         break;
@@ -156,7 +186,10 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
     if (level > 0) {
       newLevelRules();
       setGameStatus('newLevel');
-      setTimeout(setGameStatus, DELAY_TO_START_NEW_LEVEL_MS, 'running');
+      setTimeout(() => {
+        setGameStatus('running');
+        if (!gameMusicIsPlaying) setGameMusicAudio('play');
+      }, DELAY_TO_START_NEW_LEVEL_MS);
     } else if (gameStatus !== 'starting') setLevel(1);
   }, [level]);
 
@@ -165,6 +198,7 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
       <header className="flex justify-between sm:mx-0.5">
         <Link
           to="/"
+          onClick={() => setGameMusicAudio('remove')}
           className="z-50 min-w-fit sm:w-24 p-1 md:px-3 md:py-1.5 flex flex-wrap justify-between bg-rose-900 bg-opacity-100 hover:bg-opacity-70 rounded-full shadow-sm"
         >
           <ArrowLeftIcon aria-hidden className="w-5 h-5 sm:w-7 sm:h-7" />

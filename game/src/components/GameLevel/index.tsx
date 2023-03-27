@@ -23,10 +23,13 @@ import {
   getLocalStorageItem,
 } from '../../utils';
 import { handleChangeWord, getPointsGained } from '../../utils/algorithm';
-import { useWindowSize } from '../../utils/hooks';
+import { useWindowSize, useAudio } from '../../utils/hooks';
 import { DELAY_TO_START_NEW_LEVEL_MS, AXLE_GAP, CANCEL_KEYS } from '../../constants';
 import type { GameStatusOptions, PercentageType, OnLevelDoneEventType } from '../../@types';
 import type { ConfigType } from '../../@types/settings';
+
+// sounds
+import wordHitSound from '../../assets/sounds/word-hit-sound.mp3';
 
 interface IFuncProps {
   level: number;
@@ -69,6 +72,7 @@ const GameLevel: FC<IFuncProps> = ({
 }: IFuncProps) => {
   const totalWordsInLevel: Readonly<number> = countWordsInWave * totalWaves;
 
+  const volume: ConfigType['volume'] = getLocalStorageItem('volume');
   const considerNonNormalizedWords: ConfigType['considerNonNormalizedWords'] =
     getLocalStorageItem('considerNonNormalizedWords');
 
@@ -94,6 +98,9 @@ const GameLevel: FC<IFuncProps> = ({
     setWordsPrefixList(prefixList);
     setWordsSuffixList(suffixList);
   };
+
+  // sounds
+  const [_wordHitAudioIsPlaying, setWordHitAudio] = useAudio(wordHitSound, volume.soundEffects);
 
   const { width, height } = useWindowSize();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -176,6 +183,7 @@ const GameLevel: FC<IFuncProps> = ({
 
     const wordHit = displayedWords[hitIndex];
     if (wordHit && !wordsHitsNames?.includes(wordHit) && !wordsMissedNames?.includes(wordHit)) {
+      setWordHitAudio('play');
       const normalizedWordHit = normalizeValue(wordHit);
       const isNormalized = wordHit === normalizedWordHit;
       const isDiagonal = diagonalIndexes?.includes(hitIndex);
