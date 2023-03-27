@@ -57,14 +57,12 @@ export function useAudio(
   url: string,
   volume: PercentageType = 100,
   loop: boolean = false,
-  id: HTMLElement['id'] = '',
   removeSoundInLocationChange: boolean = true
 ): [boolean, (state: 'play' | 'pause' | 'stop' | 'remove') => void] {
   const [audio] = useState<HTMLAudioElement>(new Audio(url));
   const [playing, setPlaying] = useState<boolean>(false);
   audio.volume = volume / 100;
-  audio.loop = loop && playing;
-  if (id) audio.id = id;
+  audio.loop = loop;
 
   useLocationChange(() => {
     if (removeSoundInLocationChange) audio.srcObject = null;
@@ -79,9 +77,9 @@ export function useAudio(
   useEffect(() => {
     playing
       ? audio.play().catch(e => {
-          alert(
-            'Você deve interagir com a página para poder reproduzir sons (medida de privacidade do navagedor)\nErro explicado em termos técnicos:\n' +
-              e
+          console.warn(
+            'O usuário deve interagir com a página para poder reproduzir sons (medida de privacidade do navagedor)\n',
+            e
           );
         })
       : audio.pause();
@@ -89,7 +87,7 @@ export function useAudio(
 
   useEffect(() => {
     function endedCallback() {
-      if (!audio.loop) setPlaying(false);
+      if (!loop) setPlaying(false);
     }
 
     audio.addEventListener('ended', endedCallback);

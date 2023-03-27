@@ -22,7 +22,7 @@ const Timer: FC<IFuncProps> = ({
 
   const [minutes, setMinutes] = useState<number>(initialMinute);
   const [seconds, setSeconds] = useState<number>(initialSeconds);
-  const [soundIsPlaying, setSoundState] = useAudio(countdownSound, volume.soundEffects, false, 'timer');
+  const [soundIsPlaying, setSoundState] = useAudio(countdownSound, volume.soundEffects, false);
 
   const timerDone = (intervalId?: number): void => {
     clearInterval(intervalId);
