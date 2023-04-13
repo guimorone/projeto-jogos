@@ -27,6 +27,7 @@ import { useWindowSize, useAudio } from '../../utils/hooks';
 import { DELAY_TO_START_NEW_LEVEL_MS, AXLE_GAP, CANCEL_KEYS } from '../../constants';
 import type { GameStatusOptions, PercentageType, OnLevelDoneEventType } from '../../@types';
 import type { ConfigType } from '../../@types/settings';
+import { FaBomb } from 'react-icons/fa'
 
 // sounds
 import wordHitSound from '../../assets/sounds/word-hit-sound.mp3';
@@ -192,11 +193,31 @@ const GameLevel: FC<IFuncProps> = ({
       const isNormalized = wordHit === normalizedWordHit;
       const isDiagonal = diagonalIndexes?.includes(hitIndex);
 
+      const wordsObject: any[] = ([].slice.call(document.getElementsByClassName("game-word"))).map( (el: any) => {
+        return {
+          x: el.getBoundingClientRect().x + (el.getBoundingClientRect().width/2),
+          y: el.getBoundingClientRect().y + (el.getBoundingClientRect().height/2),
+          word: el.childNodes[0].innerHTML + el.childNodes[1].innerHTML,
+        };
+      });
+
+      const wordHitObject: any = wordsObject.filter((el: any) => el.word == wordHit)[0];
+
+      const permittedDistance = 100;
+
+      let wordsNearWordHit: string[] = wordsObject.filter((el: any) => {
+        return ( ( Math.abs(wordHitObject.x - el.x) <= permittedDistance) && ( Math.abs(wordHitObject.y - el.y) <= permittedDistance) );
+      }).map(word => word.word)
+
+      if ( !wordsNearWordHit.includes("bomba") ) {
+        wordsNearWordHit = [wordHit]
+      }
+
       springsApi?.current[hitIndex].stop(true);
 
       setWordWritten('');
-      setWordsHitsNames(prev => [...prev, wordHit]);
-      setWordsLeft(prev => prev - 1);
+      setWordsHitsNames(prev => prev.concat(wordsNearWordHit));
+      setWordsLeft(prev => prev - wordsNearWordHit.length);
       setPoints(prev => prev + getPointsGained(level, wordHit.length, isDiagonal, isNormalized));
     }
   };
@@ -344,11 +365,12 @@ const GameLevel: FC<IFuncProps> = ({
                   wordsHitsNames?.includes(displayedWords[index]) &&
                     'motion-safe:animate-spin transition duration-300 ease-in-out opacity-0 bg-gradient-to-r from-teal-400 to-teal-700',
                   wordsPrefixList[index] && 'bg-yellow-500 z-50',
-                  'absolute p-2 tracking-widest text-xl w-fit rounded-xl shadow-sm border-none'
+                  'absolute p-2 tracking-widest text-xl w-fit rounded-xl shadow-sm border-none game-word'
                 )}
               >
                 <span className="text-teal-600">{wordsPrefixList[index]}</span>
                 <span className="text-rose-200">{wordsSuffixList[index]}</span>
+                { (`${wordsPrefixList[index]}${wordsSuffixList[index]}` === "bomba") && <span> <FaBomb /> </span> }
               </animated.p>
             ))}
           </main>
