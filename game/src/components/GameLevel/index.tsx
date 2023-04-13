@@ -21,6 +21,7 @@ import {
   normalizeValue,
   uniqueArray,
   getLocalStorageItem,
+  shuffleArray,
 } from '../../utils';
 import { handleChangeWord, getPointsGained } from '../../utils/algorithm';
 import { useWindowSize, useAudio } from '../../utils/hooks';
@@ -78,16 +79,21 @@ const GameLevel: FC<IFuncProps> = ({
     getLocalStorageItem('considerNonNormalizedWords');
 
   const getNewDisplayedWords = (reset: boolean = true): string[] => {
-    const newDisplayedWords: string[] = reset ? [] : [...displayedWords];
+    let newDisplayedWords: string[] = reset ? [] : [...displayedWords];
 
-    if (newDisplayedWords.length < totalWordsInLevel)
-      for (let i = 1, newWord = ''; i <= totalWordsInLevel; i++) {
-        do newWord = words[randomNumber(0, words.length)];
+    if (newDisplayedWords.length < totalWordsInLevel-1)
+      for (let i = 1, newWord = ''; i <= totalWordsInLevel-1; i++) {
+        do{
+          newWord = words[randomNumber(0, words.length)];
+        }
         while (newDisplayedWords?.includes(newWord));
 
         newDisplayedWords.push(newWord);
       }
 
+    
+    newDisplayedWords.push("bomba")
+    newDisplayedWords = shuffleArray(newDisplayedWords)
     return newDisplayedWords;
   };
 
@@ -190,10 +196,10 @@ const GameLevel: FC<IFuncProps> = ({
     if (wordHit && !wordsHitsNames?.includes(wordHit) && !wordsMissedNames?.includes(wordHit)) {
       setWordHitAudio('play');
       const normalizedWordHit = normalizeValue(wordHit);
-      const isNormalized = wordHit === normalizedWordHit;
-      const isDiagonal = diagonalIndexes?.includes(hitIndex);
+      /* const isNormalized = wordHit === normalizedWordHit;
+      const isDiagonal = diagonalIndexes?.includes(hitIndex); */
 
-      const wordsObject: any[] = ([].slice.call(document.getElementsByClassName("game-word"))).map( (el: any) => {
+      let wordsObject: any[] = ([].slice.call(document.getElementsByClassName("game-word"))).map( (el: any) => {
         return {
           x: el.getBoundingClientRect().x + (el.getBoundingClientRect().width/2),
           y: el.getBoundingClientRect().y + (el.getBoundingClientRect().height/2),
@@ -201,24 +207,32 @@ const GameLevel: FC<IFuncProps> = ({
         };
       });
 
+      wordsObject = wordsObject.filter((el: any) => el.y > 0 && !checkIfOutOfBounds(el.x, el.y) && !wordsHitsNames.includes(el.word))
+
       const wordHitObject: any = wordsObject.filter((el: any) => el.word == wordHit)[0];
 
-      const permittedDistance = 100;
+      if ( !wordHitObject ) {
+        return;
+      }
 
-      let wordsNearWordHit: string[] = wordsObject.filter((el: any) => {
-        return ( ( Math.abs(wordHitObject.x - el.x) <= permittedDistance) && ( Math.abs(wordHitObject.y - el.y) <= permittedDistance) );
-      }).map(word => word.word)
+      let wordsNearWordHit: string[] = wordsObject.map(word => word.word)
 
-      if ( !wordsNearWordHit.includes("bomba") ) {
+      if ( wordHit !== "bomba" ) {
         wordsNearWordHit = [wordHit]
       }
 
-      springsApi?.current[hitIndex].stop(true);
+      for(let i = 0 ; i < displayedWords.length ; i++){
+        if(wordsNearWordHit.includes(displayedWords[i])){
+          springsApi?.current[i].stop(true);
+        }
+      }
 
       setWordWritten('');
       setWordsHitsNames(prev => prev.concat(wordsNearWordHit));
       setWordsLeft(prev => prev - wordsNearWordHit.length);
-      setPoints(prev => prev + getPointsGained(level, wordHit.length, isDiagonal, isNormalized));
+      let totalPointsBonus = 0;
+      wordsNearWordHit.forEach(word => totalPointsBonus += getPointsGained(level, word.length, false, false))
+      setPoints(prev => prev + totalPointsBonus);
     }
   };
 
