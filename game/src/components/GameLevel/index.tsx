@@ -28,7 +28,7 @@ import { useWindowSize, useAudio } from '../../utils/hooks';
 import { DELAY_TO_START_NEW_LEVEL_MS, AXLE_GAP, CANCEL_KEYS } from '../../constants';
 import type { GameStatusOptions, PercentageType, OnLevelDoneEventType } from '../../@types';
 import type { ConfigType } from '../../@types/settings';
-import { FaBomb } from 'react-icons/fa'
+import { FaBomb, FaSnowflake} from 'react-icons/fa'
 
 // sounds
 import wordHitSound from '../../assets/sounds/word-hit-sound.mp3';
@@ -78,21 +78,20 @@ const GameLevel: FC<IFuncProps> = ({
   const considerNonNormalizedWords: ConfigType['considerNonNormalizedWords'] =
     getLocalStorageItem('considerNonNormalizedWords');
 
-  const getNewDisplayedWords = (reset: boolean = true): string[] => {
-    let newDisplayedWords: string[] = reset ? [] : [...displayedWords];
-
-    if (newDisplayedWords.length < totalWordsInLevel-1)
-      for (let i = 1, newWord = ''; i <= totalWordsInLevel-1; i++) {
-        do{
-          newWord = words[randomNumber(0, words.length)];
-        }
-        while (newDisplayedWords?.includes(newWord));
-
-        newDisplayedWords.push(newWord);
-      }
-
+  const getNewDisplayedWords = (): string[] => {
+    let newDisplayedWords: string[] = [];
     
     newDisplayedWords.push("bomba")
+    newDisplayedWords.push("congelar")
+    for (let i = 1, newWord = ''; i <= totalWordsInLevel-2; i++) {
+      do{
+        newWord = words[randomNumber(0, words.length)];
+      }
+      while (newDisplayedWords?.includes(newWord));
+
+      newDisplayedWords.push(newWord);
+    }
+
     newDisplayedWords = shuffleArray(newDisplayedWords)
     return newDisplayedWords;
   };
@@ -217,7 +216,7 @@ const GameLevel: FC<IFuncProps> = ({
 
       let wordsNearWordHit: string[] = wordsObject.map(word => word.word)
 
-      if ( wordHit !== "bomba" ) {
+      if ( wordHit !== "bomba" && wordHit !== "congelar") {
         wordsNearWordHit = [wordHit]
       }
 
@@ -225,6 +224,10 @@ const GameLevel: FC<IFuncProps> = ({
         if(wordsNearWordHit.includes(displayedWords[i])){
           springsApi?.current[i].stop(true);
         }
+      }
+
+      if(wordHit === "congelar"){
+        wordsNearWordHit = ["congelar"]
       }
 
       setWordWritten('');
@@ -385,6 +388,7 @@ const GameLevel: FC<IFuncProps> = ({
                 <span className="text-teal-600">{wordsPrefixList[index]}</span>
                 <span className="text-rose-200">{wordsSuffixList[index]}</span>
                 { (`${wordsPrefixList[index]}${wordsSuffixList[index]}` === "bomba") && <span> <FaBomb /> </span> }
+                { (`${wordsPrefixList[index]}${wordsSuffixList[index]}` === "congelar") && <span> <FaSnowflake /> </span> }
               </animated.p>
             ))}
           </main>
