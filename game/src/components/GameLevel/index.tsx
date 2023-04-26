@@ -31,6 +31,7 @@ import type { ConfigType } from '../../@types/settings';
 import { FaBomb, FaSnowflake} from 'react-icons/fa'
 
 import freeze from "../../assets/freeze.jpeg"
+import explosion from "../../assets/explosion.png"
 
 // sounds
 import wordHitSound from '../../assets/sounds/word-hit-sound.mp3';
@@ -191,9 +192,33 @@ const GameLevel: FC<IFuncProps> = ({
   };
   const [springs, springsApi] = useSprings(totalWordsInLevel, springsProps, [diagonalIndexes]);
 
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
   // ------------------------------------------------- React Springs -------------------------------------------------
 
-  const gotIt = (hitIndex: number): void => {
+  const showBombInScreen = async (x : any, y : any, duration: number): Promise<void> => {
+    // Get the body element
+    const body = document.body;
+
+    // Create an img element
+    const img = document.createElement('img');
+    img.src = explosion;
+
+    // Set the position of the img element
+    img.style.position = 'absolute';
+    img.style.left = `${x - 50}px`;
+    img.style.top = `${y - 50}px`;
+    img.style.zIndex = "999";
+    img.style.maxWidth = "100px";
+
+    // Append the img element to the body
+    body.appendChild(img);
+
+    await sleep(duration);
+    img.remove();
+  }
+
+  const gotIt = async (hitIndex: number): Promise<void> => {
     if (wordsLeft <= 0 || hitIndex < 0 || hitIndex >= displayedWords?.length) return;
 
     const wordHit = displayedWords[hitIndex];
@@ -202,10 +227,8 @@ const GameLevel: FC<IFuncProps> = ({
       const normalizedWordHit = normalizeValue(wordHit);
       /* const isNormalized = wordHit === normalizedWordHit;
       const isDiagonal = diagonalIndexes?.includes(hitIndex); */
-      
-      console.log(document.getElementsByClassName("game-word"));
 
-      let wordsObject: any[] = ([].slice.call(document.getElementsByClassName("game-word"))).map( (el: any) => {
+      const wordsObjectOriginal: any[] = ([].slice.call(document.getElementsByClassName("game-word"))).map( (el: any) => {
         return {
           x: el.getBoundingClientRect().x + (el.getBoundingClientRect().width/2),
           y: el.getBoundingClientRect().y + (el.getBoundingClientRect().height/2),
@@ -213,7 +236,7 @@ const GameLevel: FC<IFuncProps> = ({
         };
       });
 
-      wordsObject = wordsObject.filter((el: any) => el.y > 0 && !checkIfOutOfBounds(el.x, el.y) && !wordsHitsNames.includes(el.word))
+      let wordsObject = wordsObjectOriginal.filter((el: any) => el.y > 0 && !checkIfOutOfBounds(el.x, el.y) && !wordsHitsNames.includes(el.word))
 
       const wordHitObject: any = wordsObject.filter((el: any) => el.word == wordHit)[0];
 
@@ -241,9 +264,20 @@ const GameLevel: FC<IFuncProps> = ({
         wordsNearWordHit = ["congelar"]
       }
 
+      if(wordHit === "bomba") {
+        for(let i = 0 ; i < displayedWords.length ; i++){
+          if(wordsNearWordHit.includes(displayedWords[i])){
+            await showBombInScreen(wordsObjectOriginal[i].x, wordsObjectOriginal[i].y, 190); 
+            setWordsHitsNames(prev => prev.concat([displayedWords[i]]));
+          }
+        }
+      }
+
       setFrozenWords(newFrozenWords);
       setWordWritten('');
-      setWordsHitsNames(prev => prev.concat(wordsNearWordHit));
+      if(wordHit !== "bomba"){
+        setWordsHitsNames(prev => prev.concat(wordsNearWordHit));
+      }
       setWordsLeft(prev => prev - wordsNearWordHit.length);
       let totalPointsBonus = 0;
       wordsNearWordHit.forEach(word => totalPointsBonus += getPointsGained(level, word.length, false, false))
@@ -406,6 +440,9 @@ const GameLevel: FC<IFuncProps> = ({
                     justifyContent: "center",
                     alignItems: "center",
                     gap: "6px",
+                    position: "relative",
+                    bottom: "12px",
+                    right: "16px",
                   } : {
                     display: "flex",
                     justifyContent: "center",
