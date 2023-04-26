@@ -30,6 +30,8 @@ import type { GameStatusOptions, PercentageType, OnLevelDoneEventType } from '..
 import type { ConfigType } from '../../@types/settings';
 import { FaBomb, FaSnowflake} from 'react-icons/fa'
 
+import freeze from "../../assets/freeze.jpeg"
+
 // sounds
 import wordHitSound from '../../assets/sounds/word-hit-sound.mp3';
 
@@ -105,6 +107,7 @@ const GameLevel: FC<IFuncProps> = ({
     );
 
     setDisplayedWords(newDisplayedWords);
+    setFrozenWords( Array(newDisplayedWords.length).fill(false) );
     setWordsPrefixList(prefixList);
     setWordsSuffixList(suffixList);
   };
@@ -123,6 +126,7 @@ const GameLevel: FC<IFuncProps> = ({
   const [wordsPrefixList, setWordsPrefixList] = useState<string[]>([]);
   const [wordsSuffixList, setWordsSuffixList] = useState<string[]>([]);
   const [displayedWords, setDisplayedWords] = useState<string[]>([]);
+  const [frozenWords, setFrozenWords] = useState<boolean[]>([]);
   const [diagonalIndexes, setDiagonalIndexes] = useState<number[]>([]);
 
   const resetStates = (): void => {
@@ -134,6 +138,7 @@ const GameLevel: FC<IFuncProps> = ({
     setWordsPrefixList([]);
     setWordsSuffixList([]);
     setDisplayedWords([]);
+    setFrozenWords([]);
     setDiagonalIndexes([]);
   };
 
@@ -197,12 +202,14 @@ const GameLevel: FC<IFuncProps> = ({
       const normalizedWordHit = normalizeValue(wordHit);
       /* const isNormalized = wordHit === normalizedWordHit;
       const isDiagonal = diagonalIndexes?.includes(hitIndex); */
+      
+      console.log(document.getElementsByClassName("game-word"));
 
       let wordsObject: any[] = ([].slice.call(document.getElementsByClassName("game-word"))).map( (el: any) => {
         return {
           x: el.getBoundingClientRect().x + (el.getBoundingClientRect().width/2),
           y: el.getBoundingClientRect().y + (el.getBoundingClientRect().height/2),
-          word: el.childNodes[0].innerHTML + el.childNodes[1].innerHTML,
+          word: el.childNodes[0].childNodes[0].innerHTML + el.childNodes[0].childNodes[1].innerHTML,
         };
       });
 
@@ -220,9 +227,11 @@ const GameLevel: FC<IFuncProps> = ({
         wordsNearWordHit = [wordHit]
       }
 
+      let newFrozenWords = JSON.parse(JSON.stringify(frozenWords));
       for(let i = 0 ; i < displayedWords.length ; i++){
         if(wordsNearWordHit.includes(displayedWords[i])){
           springsApi?.current[i].stop(true);
+          newFrozenWords[i] = true;
         }
       }
 
@@ -230,6 +239,7 @@ const GameLevel: FC<IFuncProps> = ({
         wordsNearWordHit = ["congelar"]
       }
 
+      setFrozenWords(newFrozenWords);
       setWordWritten('');
       setWordsHitsNames(prev => prev.concat(wordsNearWordHit));
       setWordsLeft(prev => prev - wordsNearWordHit.length);
@@ -376,20 +386,27 @@ const GameLevel: FC<IFuncProps> = ({
           <main className="absolute w-full h-full min-h-screen -z-10">
             {springs?.map((props, index) => (
               <animated.p
-                style={props}
-                key={`ingame_word_${index}_${displayedWords[index]}`}
-                className={classNames(
-                  wordsHitsNames?.includes(displayedWords[index]) &&
-                    'motion-safe:animate-spin transition duration-300 ease-in-out opacity-0 bg-gradient-to-r from-teal-400 to-teal-700',
-                  wordsPrefixList[index] && 'bg-yellow-500 z-50',
-                  'absolute p-2 tracking-widest text-xl w-fit rounded-xl shadow-sm border-none game-word'
-                )}
-              >
-                <span className="text-teal-600">{wordsPrefixList[index]}</span>
-                <span className="text-rose-200">{wordsSuffixList[index]}</span>
-                { (`${wordsPrefixList[index]}${wordsSuffixList[index]}` === "bomba") && <span> <FaBomb /> </span> }
-                { (`${wordsPrefixList[index]}${wordsSuffixList[index]}` === "congelar") && <span> <FaSnowflake /> </span> }
-              </animated.p>
+                  style={props}
+                  key={`ingame_word_${index}_${displayedWords[index]}`}
+                  className={classNames(
+                    wordsHitsNames?.includes(displayedWords[index]) &&
+                      'motion-safe:animate-spin transition duration-300 ease-in-out opacity-0 bg-gradient-to-r from-teal-400 to-teal-700',
+                    wordsPrefixList[index] && !frozenWords[index] && 'bg-yellow-500 z-50',
+                    'absolute p-2 tracking-widest text-xl w-fit rounded-xl shadow-sm border-none game-word'
+                  )}
+                >
+                  <span id="word-wrapper" style={ frozenWords[index] ? {
+                    backgroundImage: `url(${freeze})`,
+                    padding: ".75rem 1rem",
+                    borderRadius: "12px",
+                    backgroundSize: "100px"
+                  } : {} } >
+                  <span className= {frozenWords[index] ? "text-green-500" : "text-teal-600" }>{wordsPrefixList[index]}</span>
+                  <span className= {frozenWords[index] ? "text-white" : "text-rose-200" }>{wordsSuffixList[index]}</span>
+                  { (`${wordsPrefixList[index]}${wordsSuffixList[index]}` === "bomba") && <span> <FaBomb /> </span> }
+                  { (`${wordsPrefixList[index]}${wordsSuffixList[index]}` === "congelar") && <span> <FaSnowflake /> </span> }
+                  </span>
+                </animated.p>
             ))}
           </main>
         )}

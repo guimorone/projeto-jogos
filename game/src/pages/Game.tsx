@@ -80,15 +80,12 @@ const Game: FC<IFuncProps> = ({}: IFuncProps) => {
   useEffect(() => {
     switch (gameStatus) {
       case 'starting':
-        const conjPromise = asyncReadLocalTxtFile(conjugations);
-        const dicioPromise = asyncReadLocalTxtFile(dicio);
-        const verbsPromise = asyncReadLocalTxtFile(verbs);
         const wordsPromise = asyncReadLocalTxtFile(words);
 
-        Promise.all([conjPromise, dicioPromise, verbsPromise, wordsPromise])
-          .then(([conjData, dicioData, verbsData, wordsData]) => {
+        Promise.all([wordsPromise])
+          .then(([wordsData]) => {
             const newWordsList = removeStrangeStrings(
-              uniqueArray([...conjData, ...dicioData, ...verbsData, ...wordsData])
+              wordsData
             );
 
             setWordsList(newWordsList);
