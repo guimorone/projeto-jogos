@@ -228,9 +228,6 @@ const GameLevel: FC<IFuncProps> = ({
     const wordHit = displayedWords[hitIndex];
     if (wordHit && !wordsHitsNames?.includes(wordHit) && !wordsMissedNames?.includes(wordHit)) {
       setWordHitAudio('play');
-      const normalizedWordHit = normalizeValue(wordHit);
-      /* const isNormalized = wordHit === normalizedWordHit;
-      const isDiagonal = diagonalIndexes?.includes(hitIndex); */
 
       const wordsObjectOriginal: any[] = ([].slice.call(document.getElementsByClassName("game-word"))).map( (el: any) => {
         return {
@@ -286,7 +283,14 @@ const GameLevel: FC<IFuncProps> = ({
       }
       setWordsLeft(prev => prev - wordsNearWordHit.length);
       let totalPointsBonus = 0;
-      wordsNearWordHit.forEach(word => totalPointsBonus += getPointsGained(level, word.length, false, false))
+      wordsNearWordHit.forEach(word => {
+        let isWordDiagonal = false;
+        for(let diagonalIndex of diagonalIndexes){
+          isWordDiagonal = isWordDiagonal || (displayedWords[diagonalIndex] == word);
+        }
+        const isNormalized = word === normalizeValue(word);
+        totalPointsBonus += getPointsGained(level, word.length, isWordDiagonal, isNormalized);
+      })
       setPoints(prev => prev + totalPointsBonus);
     }
   };
