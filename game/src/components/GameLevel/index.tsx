@@ -439,7 +439,7 @@ const GameLevel: FC<IFuncProps> = ({
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    gap: "6px",
+                    gap: "2px",
                     position: "relative",
                     bottom: "12px",
                     right: "16px",
@@ -447,7 +447,7 @@ const GameLevel: FC<IFuncProps> = ({
                     display: "flex",
                     justifyContent: "center",
                     alignItems: "center",
-                    gap: "6px",
+                    gap: "2px",
                   } } >
                   <span className= {frozenWords[index] ? "text-green-500" : "text-teal-600" }>{wordsPrefixList[index]}</span>
                   <span className= {frozenWords[index] ? "text-white" : "text-rose-200" }>{wordsSuffixList[index]}</span>
