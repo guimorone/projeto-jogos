@@ -228,10 +228,12 @@ const GameLevel: FC<IFuncProps> = ({
       }
 
       let newFrozenWords = JSON.parse(JSON.stringify(frozenWords));
+
       for(let i = 0 ; i < displayedWords.length ; i++){
         if(wordsNearWordHit.includes(displayedWords[i])){
           springsApi?.current[i].stop(true);
-          newFrozenWords[i] = true;
+          if(wordHit === "congelar")
+            newFrozenWords[i] = true;
         }
       }
 
@@ -399,8 +401,17 @@ const GameLevel: FC<IFuncProps> = ({
                     backgroundImage: `url(${freeze})`,
                     padding: ".75rem 1rem",
                     borderRadius: "12px",
-                    backgroundSize: "100px"
-                  } : {} } >
+                    backgroundSize: "100px",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: "6px",
+                  } : {
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    gap: "6px",
+                  } } >
                   <span className= {frozenWords[index] ? "text-green-500" : "text-teal-600" }>{wordsPrefixList[index]}</span>
                   <span className= {frozenWords[index] ? "text-white" : "text-rose-200" }>{wordsSuffixList[index]}</span>
                   { (`${wordsPrefixList[index]}${wordsSuffixList[index]}` === "bomba") && <span> <FaBomb /> </span> }
