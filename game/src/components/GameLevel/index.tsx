@@ -35,6 +35,8 @@ import explosion from "../../assets/explosion.png"
 
 // sounds
 import wordHitSound from '../../assets/sounds/word-hit-sound.mp3';
+import explosionSound from '../../assets/sounds/explosion-sound.mp3';
+import freezeSound from '../../assets/sounds/freeze-sound.mp3';
 
 interface IFuncProps {
   level: number;
@@ -115,6 +117,8 @@ const GameLevel: FC<IFuncProps> = ({
 
   // sounds
   const [_wordHitAudioIsPlaying, setWordHitAudio] = useAudio(wordHitSound, volume.soundEffects);
+  const [explosionAudio, setExplosionAudio] = useAudio(explosionSound, volume.soundEffects);
+  const [freezeAudio, setFreezeAudio] = useAudio(freezeSound, volume.soundEffects);
 
   const { width, height } = useWindowSize();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -261,13 +265,15 @@ const GameLevel: FC<IFuncProps> = ({
       }
 
       if(wordHit === "congelar"){
+        setFreezeAudio('play');
         wordsNearWordHit = ["congelar"]
       }
 
       if(wordHit === "bomba") {
+        setExplosionAudio('play');
         for(let i = 0 ; i < displayedWords.length ; i++){
           if(wordsNearWordHit.includes(displayedWords[i])){
-            await showBombInScreen(wordsObjectOriginal[i].x, wordsObjectOriginal[i].y, 190); 
+            await showBombInScreen(wordsObjectOriginal[i].x, wordsObjectOriginal[i].y, 150); 
             setWordsHitsNames(prev => prev.concat([displayedWords[i]]));
           }
         }
